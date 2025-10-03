@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RelayManager Tests</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    h1 {
+      color: #333;
+      margin-top: 0;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #667eea;
+      margin-top: 30px;
+    }
+    .test-section {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin: 5px;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .output {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 10px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .success {
+      color: #4caf50;
+      font-weight: bold;
+    }
+    .error {
+      color: #f44336;
+      font-weight: bold;
+    }
+    .info {
+      color: #2196f3;
+    }
+    .warning {
+      color: #ff9800;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    .status.ready {
+      background: #4caf50;
+      color: white;
+    }
+    .status.pending {
+      background: #ff9800;
+      color: white;
+    }
+    .status.error {
+      background: #f44336;
+      color: white;
+    }
+    .relay-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 10px;
+      margin: 15px 0;
+    }
+    .relay-item {
+      background: white;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .relay-url {
+      font-weight: bold;
+      color: #667eea;
+      word-break: break-all;
+    }
+    .relay-status {
+      margin-top: 5px;
+      font-size: 11px;
+    }
+    .button-group {
+      margin: 15px 0;
+    }
+    .event-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .event-id {
+      font-family: monospace;
+      color: #667eea;
+      font-size: 11px;
+    }
+    .event-content {
+      margin: 8px 0;
+      color: #333;
+    }
+    .event-meta {
+      font-size: 11px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔌 RelayManager Tests</h1>
+    
+    <div class="test-section">
+      <h2>Status <span id="status" class="status pending">Nicht initialisiert</span></h2>
+      <div class="button-group">
+        <button onclick="initializeManager()">1. Initialize</button>
+        <button onclick="testAddRemoveRelays()">2. Add/Remove Relays</button>
+        <button onclick="testQueryEvents()">3. Query Events</button>
+        <button onclick="testSubscribe()">4. Subscribe</button>
+        <button onclick="testFastestRelay()">5. Fastest Relay</button>
+        <button onclick="testPublish()">6. Publish (Test)</button>
+        <button onclick="showRelayStatus()">Relay Status</button>
+        <button onclick="clearOutput()">Clear Output</button>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h2>Configured Relays</h2>
+      <div id="relay-list" class="relay-list">
+        <div class="info">Noch keine Relays konfiguriert</div>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h2>Test Output</h2>
+      <div id="output" class="output">Warte auf Tests...</div>
+    </div>
+
+    <div class="test-section">
+      <h2>Received Events</h2>
+      <div id="events" class="output" style="max-height: 300px;">
+        Noch keine Events empfangen
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { RelayManager } from './framework/core/RelayManager.js';
+    import { EventBus } from './framework/core/EventBus.js';
+
+    // Global state
+    let manager = null;
+    let currentSubscription = null;
+    let receivedEvents = [];
+
+    // Helper functions
+    function log(message, type = 'info') {
+      const output = document.getElementById('output');
+      const timestamp = new Date().toLocaleTimeString();
+      const className = type;
+      const line = `[${timestamp}] ${message}\n`;
+      
+      const span = document.createElement('span');
+      span.className = className;
+      span.textContent = line;
+      output.appendChild(span);
+      output.scrollTop = output.scrollHeight;
+    }
+
+    function updateStatus(status, type = 'pending') {
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = status;
+      statusEl.className = `status ${type}`;
+    }
+
+    function displayRelays() {
+      if (!manager) return;
+      
+      const relayList = document.getElementById('relay-list');
+      const relays = manager.getRelays();
+      const status = manager.getRelayStatus();
+      
+      if (relays.length === 0) {
+        relayList.innerHTML = '<div class="info">Keine Relays konfiguriert</div>';
+        return;
+      }
+
+      relayList.innerHTML = relays.map(url => {
+        const relayStatus = status.get(url) || { status: 'unknown', lastSeen: null };
+        const lastSeen = relayStatus.lastSeen 
+          ? new Date(relayStatus.lastSeen).toLocaleTimeString()
+          : 'Never';
+        
+        return `
+          <div class="relay-item">
+            <div class="relay-url">${url}</div>
+            <div class="relay-status">
+              Status: <span class="${relayStatus.status}">${relayStatus.status}</span><br>
+              Last Seen: ${lastSeen}
+              ${relayStatus.error ? `<br>Error: ${relayStatus.error}` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function displayEvent(event) {
+      const eventsEl = document.getElementById('events');
+      if (receivedEvents.length === 0) {
+        eventsEl.innerHTML = '';
+      }
+      
+      receivedEvents.push(event);
+      
+      const eventCard = document.createElement('div');
+      eventCard.className = 'event-card';
+      eventCard.innerHTML = `
+        <div class="event-id">ID: ${event.id.substring(0, 16)}...</div>
+        <div class="event-content">${event.content.substring(0, 100)}${event.content.length > 100 ? '...' : ''}</div>
+        <div class="event-meta">
+          Kind: ${event.kind} | 
+          Author: ${event.pubkey.substring(0, 8)}... | 
+          Time: ${new Date(event.created_at * 1000).toLocaleTimeString()}
+        </div>
+      `;
+      
+      eventsEl.insertBefore(eventCard, eventsEl.firstChild);
+      
+      // Keep only last 10 events
+      if (receivedEvents.length > 10) {
+        receivedEvents.shift();
+        eventsEl.removeChild(eventsEl.lastChild);
+      }
+    }
+
+    // Test functions
+    window.initializeManager = async function() {
+      try {
+        log('Initialisiere RelayManager...', 'info');
+        
+        const eventBus = new EventBus();
+        eventBus.setDebugMode(true);
+        
+        manager = new RelayManager(eventBus, {
+          relays: [
+            'wss://relay.damus.io',
+            'wss://nos.lol',
+            'wss://relay.nostr.band'
+          ]
+        });
+
+        // Listen to events
+        manager.on('relay:initialized', (data) => {
+          log(`✓ Initialized with ${data.relays.length} relays`, 'success');
+          displayRelays();
+        });
+
+        manager.on('relay:published', (data) => {
+          log(`✓ Published: ${data.successCount}/${data.totalCount} relays`, 'success');
+        });
+
+        manager.on('relay:queried', (data) => {
+          log(`✓ Query returned ${data.count} events`, 'success');
+        });
+
+        manager.on('relay:event', (data) => {
+          displayEvent(data.event);
+        });
+
+        manager.on('relay:eose', (data) => {
+          log(`✓ EOSE for subscription ${data.subscriptionId}`, 'info');
+        });
+
+        await manager.initialize();
+        
+        updateStatus('Initialisiert', 'ready');
+        log('✓ RelayManager erfolgreich initialisiert', 'success');
+        
+        // Expose globally
+        window.testRelayManager = manager;
+        
+      } catch (error) {
+        log(`✗ Fehler: ${error.message}`, 'error');
+        updateStatus('Fehler', 'error');
+      }
+    };
+
+    window.testAddRemoveRelays = function() {
+      if (!manager) {
+        log('✗ Manager nicht initialisiert', 'error');
+        return;
+      }
+
+      try {
+        log('Teste Add/Remove Relays...', 'info');
+        
+        const initialCount = manager.getRelays().length;
+        log(`Initial: ${initialCount} relays`, 'info');
+        
+        // Add relay
+        manager.addRelays(['wss://relay.test']);
+        const afterAdd = manager.getRelays().length;
+        log(`Nach Add: ${afterAdd} relays`, afterAdd === initialCount + 1 ? 'success' : 'error');
+        
+        // Remove relay
+        manager.removeRelays(['wss://relay.test']);
+        const afterRemove = manager.getRelays().length;
+        log(`Nach Remove: ${afterRemove} relays`, afterRemove === initialCount ? 'success' : 'error');
+        
+        displayRelays();
+        log('✓ Add/Remove Test erfolgreich', 'success');
+        
+      } catch (error) {
+        log(`✗ Fehler: ${error.message}`, 'error');
+      }
+    };
+
+    window.testQueryEvents = async function() {
+      if (!manager) {
+        log('✗ Manager nicht initialisiert', 'error');
+        return;
+      }
+
+      try {
+        log('Querying events (kinds: [1], limit: 5)...', 'info');
+        
+        const events = await manager.query(
+          [{ kinds: [1], limit: 5 }],
+          { timeout: 5000 }
+        );
+        
+        log(`✓ Empfangen: ${events.length} events`, 'success');
+        
+        events.forEach((event, i) => {
+          log(`  Event ${i + 1}: ${event.content.substring(0, 50)}...`, 'info');
+          displayEvent(event);
+        });
+        
+      } catch (error) {
+        log(`✗ Query Fehler: ${error.message}`, 'error');
+      }
+    };
+
+    window.testSubscribe = function() {
+      if (!manager) {
+        log('✗ Manager nicht initialisiert', 'error');
+        return;
+      }
+
+      try {
+        // Close existing subscription
+        if (currentSubscription) {
+          currentSubscription.close();
+          log('Alte Subscription geschlossen', 'info');
+        }
+
+        log('Erstelle Subscription (kinds: [1], limit: 10)...', 'info');
+        
+        let count = 0;
+        currentSubscription = manager.subscribe(
+          [{ kinds: [1], limit: 10 }],
+          (event) => {
+            count++;
+            log(`Received event ${count}: ${event.id.substring(0, 16)}...`, 'info');
+          }
+        );
+        
+        log(`✓ Subscription erstellt: ${currentSubscription.id}`, 'success');
+        log('Warte auf Events... (automatisch nach 10 Events oder EOSE)', 'info');
+        
+        // Auto-close after 5 seconds
+        setTimeout(() => {
+          if (currentSubscription) {
+            currentSubscription.close();
+            log(`✓ Subscription geschlossen. ${count} Events empfangen`, 'success');
+            currentSubscription = null;
+          }
+        }, 5000);
+        
+      } catch (error) {
+        log(`✗ Subscribe Fehler: ${error.message}`, 'error');
+      }
+    };
+
+    window.testFastestRelay = async function() {
+      if (!manager) {
+        log('✗ Manager nicht initialisiert', 'error');
+        return;
+      }
+
+      try {
+        log('Teste Relay-Geschwindigkeiten...', 'info');
+        
+        const fastest = await manager.getFastestRelay();
+        
+        log(`✓ Schnellster Relay: ${fastest}`, 'success');
+        
+      } catch (error) {
+        log(`✗ Fastest Relay Fehler: ${error.message}`, 'error');
+      }
+    };
+
+    window.testPublish = async function() {
+      if (!manager) {
+        log('✗ Manager nicht initialisiert', 'error');
+        return;
+      }
+
+      try {
+        log('Teste Publish (mit Test-Event, wird fehlschlagen)...', 'warning');
+        
+        const testEvent = {
+          id: 'test-id-' + Date.now(),
+          pubkey: '0'.repeat(64),
+          created_at: Math.floor(Date.now() / 1000),
+          kind: 1,
+          tags: [],
+          content: 'Test event from RelayManager',
+          sig: '0'.repeat(128)
+        };
+        
+        const results = await manager.publish(testEvent, null, 2000);
+        
+        const successful = results.filter(r => r.success).length;
+        log(`Publish results: ${successful}/${results.length} erfolgreich`, 
+            successful > 0 ? 'success' : 'warning');
+        
+        results.forEach(r => {
+          log(`  ${r.relay}: ${r.success ? '✓' : '✗'} ${r.error || 'OK'}`, 
+              r.success ? 'success' : 'error');
+        });
+        
+      } catch (error) {
+        log(`✗ Publish Fehler (erwartet): ${error.message}`, 'warning');
+      }
+    };
+
+    window.showRelayStatus = function() {
+      if (!manager) {
+        log('✗ Manager nicht initialisiert', 'error');
+        return;
+      }
+
+      try {
+        log('=== Relay Status ===', 'info');
+        
+        const status = manager.getRelayStatus();
+        const relays = manager.getRelays();
+        
+        log(`Konfigurierte Relays: ${relays.length}`, 'info');
+        log(`Aktive Subscriptions: ${manager.getSubscriptionCount()}`, 'info');
+        
+        status.forEach((info, relay) => {
+          log(`  ${relay}:`, 'info');
+          log(`    Status: ${info.status}`, 'info');
+          log(`    Last Seen: ${info.lastSeen ? new Date(info.lastSeen).toLocaleString() : 'Never'}`, 'info');
+          if (info.error) {
+            log(`    Error: ${info.error}`, 'error');
+          }
+        });
+        
+      } catch (error) {
+        log(`✗ Status Fehler: ${error.message}`, 'error');
+      }
+    };
+
+    window.clearOutput = function() {
+      document.getElementById('output').innerHTML = 'Output cleared.\n';
+      log('Ready for tests', 'info');
+    };
+
+    // Auto-initialize on load
+    log('Seite geladen. Klicke "Initialize" um zu starten.', 'info');
+    log('', 'info');
+    log('Verfügbare Tests:', 'info');
+    log('1. Initialize - Initialisiert RelayManager mit 3 Relays', 'info');
+    log('2. Add/Remove - Testet Relay-Verwaltung', 'info');
+    log('3. Query - Lädt 5 Text Notes', 'info');
+    log('4. Subscribe - Abonniert Events für 5 Sekunden', 'info');
+    log('5. Fastest Relay - Findet schnellsten Relay', 'info');
+    log('6. Publish - Testet Publishing (wird fehlschlagen)', 'info');
+  </script>
+</body>
+</html>

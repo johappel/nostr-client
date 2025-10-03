@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventManager - Real World Test</title>
+  
+  <!-- Import Map für nostr-tools -->
+  <script type="importmap">
+    {
+      "imports": {
+        "nostr-tools/nip19": "https://esm.sh/nostr-tools@2.17.0/nip19",
+        "@noble/hashes/utils": "https://esm.sh/@noble/hashes@1.3.1/utils",
+        "@scure/base": "https://esm.sh/@scure/base@1.1.1"
+      }
+    }
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    h1 {
+      color: #667eea;
+      margin: 0 0 10px 0;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    .user-info {
+      background: #f0f4ff;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border-left: 4px solid #667eea;
+    }
+    .user-info.disconnected {
+      background: #fff3cd;
+      border-left-color: #ffc107;
+    }
+    .user-info h3 {
+      margin: 0 0 10px 0;
+      color: #333;
+    }
+    .user-pubkey {
+      font-family: monospace;
+      font-size: 13px;
+      word-break: break-all;
+      color: #667eea;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+    .section h2 {
+      margin-top: 0;
+      color: #333;
+      font-size: 1.2em;
+    }
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px 5px 5px 0;
+      transition: transform 0.2s;
+    }
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    button.danger {
+      background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+    }
+    button.secondary {
+      background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      margin-bottom: 10px;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .relay-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .relay-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+    }
+    .relay-url {
+      font-family: monospace;
+      font-size: 13px;
+      color: #667eea;
+      flex: 1;
+    }
+    .relay-status {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    .relay-status.connected { background: #10b981; }
+    .relay-status.disconnected { background: #ef4444; }
+    .relay-status.pending { background: #fbbf24; }
+    .output {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 15px;
+    }
+    .output pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .success { color: #4ade80; }
+    .error { color: #f87171; }
+    .info { color: #60a5fa; }
+    .warning { color: #fbbf24; }
+    .event-card {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 10px;
+      border: 1px solid #e5e7eb;
+    }
+    .event-card .event-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: #666;
+    }
+    .event-card .event-content {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .event-card .event-id {
+      font-family: monospace;
+      font-size: 11px;
+      color: #999;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #333;
+      font-weight: 500;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge.success { background: #d1fae5; color: #065f46; }
+    .badge.error { background: #fee2e2; color: #991b1b; }
+    .badge.info { background: #dbeafe; color: #1e40af; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 EventManager - Real World Test</h1>
+    <p class="subtitle">Test mit echtem NIP-07 Signer und realen Relays</p>
+
+    <!-- User Info -->
+    <div id="user-info" class="user-info disconnected">
+      <h3>🔐 Authentifizierung</h3>
+      <div id="user-status">Nicht verbunden</div>
+      <button id="connect-btn">Mit NIP-07 verbinden</button>
+    </div>
+
+    <!-- Relay Management -->
+    <div class="section">
+      <h2>🌐 Relay Management</h2>
+      <div class="form-group">
+        <label for="relay-input">Relay URL hinzufügen:</label>
+        <input 
+          type="text" 
+          id="relay-input" 
+          placeholder="wss://relay-rpi.edufeed.org"
+          value="wss://relay-rpi.edufeed.org"
+        >
+        <button id="add-relay-btn">Relay hinzufügen</button>
+        <button class="secondary" id="add-default-relays-btn">Standard-Relays hinzufügen</button>
+      </div>
+      <div id="relay-list" class="relay-list"></div>
+    </div>
+
+    <div class="grid">
+      <!-- Create Event -->
+      <div class="section">
+        <h2>✍️ Event erstellen</h2>
+        <div class="form-group">
+          <label for="event-content">Nachricht:</label>
+          <textarea 
+            id="event-content" 
+            rows="4" 
+            placeholder="Deine Nostr-Nachricht..."
+          ></textarea>
+        </div>
+        <button id="publish-btn" disabled>
+          Event erstellen & publishen
+        </button>
+        <div id="create-output" class="output" style="display:none;">
+          <pre id="create-results"></pre>
+        </div>
+      </div>
+
+      <!-- Query Events -->
+      <div class="section">
+        <h2>🔍 Events abfragen</h2>
+        <div class="form-group">
+          <label for="query-limit">Anzahl Events:</label>
+          <input type="number" id="query-limit" value="10" min="1" max="50">
+        </div>
+        <button id="query-my-btn" disabled>
+          Meine Events laden
+        </button>
+        <button id="query-global-btn">
+          Globale Events laden
+        </button>
+        <div id="query-output" class="output" style="display:none;">
+          <pre id="query-results"></pre>
+        </div>
+        <div id="events-display"></div>
+      </div>
+    </div>
+
+    <!-- Subscribe -->
+    <div class="section">
+      <h2>📡 Live Subscription</h2>
+      <button id="sub-start-btn">
+        Subscription starten
+      </button>
+      <button id="sub-stop-btn" disabled>
+        Subscription stoppen
+      </button>
+      <button id="sub-clear-btn">
+        Output leeren
+      </button>
+      <div id="sub-output" class="output" style="display:none;">
+        <pre id="sub-results"></pre>
+      </div>
+    </div>
+
+    <!-- Event Deletion -->
+    <div class="section">
+      <h2>🗑️ Event löschen</h2>
+      <div class="form-group">
+        <label for="delete-id">Event ID:</label>
+        <input 
+          type="text" 
+          id="delete-id" 
+          placeholder="Event ID zum Löschen"
+        >
+      </div>
+      <div class="form-group">
+        <label for="delete-reason">Grund (optional):</label>
+        <input 
+          type="text" 
+          id="delete-reason" 
+          placeholder="Warum wird das Event gelöscht?"
+        >
+      </div>
+      <button class="danger" id="delete-btn" disabled>
+        Event löschen
+      </button>
+      <div id="delete-output" class="output" style="display:none;">
+        <pre id="delete-results"></pre>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { EventManager } from './framework/core/EventManager.js';
+    import { TemplateEngine } from './framework/core/TemplateEngine.js';
+    import { SignerManager } from './framework/core/SignerManager.js';
+    import { RelayManager } from './framework/core/RelayManager.js';
+    import { Nip07Plugin } from './framework/plugins/auth/Nip07Plugin.js';
+    import { TextNoteTemplate } from './framework/templates/nip01.js';
+    import { EventDeletionTemplate } from './framework/templates/nip09.js';
+
+    // Global state
+    let eventManager = null;
+    let relayManager = null;
+    let signerManager = null;
+    let currentUser = null;
+    let currentSubscription = null;
+    let connectedRelays = new Set();
+
+    // Initialize
+    async function initialize() {
+      log('info', '🚀 Initialisiere EventManager...');
+
+      // Template Engine
+      const templateEngine = new TemplateEngine();
+      templateEngine.register('text-note', new TextNoteTemplate());
+      templateEngine.register('delete-event', new EventDeletionTemplate());
+
+      // Signer Manager
+      signerManager = new SignerManager();
+
+      // Relay Manager
+      relayManager = new RelayManager(null, { relays: [] });
+      await relayManager.initialize();
+
+      // Event Manager
+      eventManager = new EventManager();
+      eventManager.setTemplateEngine(templateEngine);
+      eventManager.setSignerManager(signerManager);
+      eventManager.setRelayManager(relayManager);
+
+      // Event listeners
+      eventManager.on('event:published', (data) => {
+        log('success', `✓ Event published to ${data.successCount}/${data.totalCount} relays`);
+      });
+
+      log('success', '✓ EventManager bereit');
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+      document.getElementById('connect-btn').addEventListener('click', connectNIP07);
+      document.getElementById('add-relay-btn').addEventListener('click', addRelay);
+      document.getElementById('add-default-relays-btn').addEventListener('click', addDefaultRelays);
+      document.getElementById('publish-btn').addEventListener('click', createAndPublishEvent);
+      document.getElementById('query-my-btn').addEventListener('click', queryMyEvents);
+      document.getElementById('query-global-btn').addEventListener('click', queryGlobalEvents);
+      document.getElementById('sub-start-btn').addEventListener('click', startSubscription);
+      document.getElementById('sub-stop-btn').addEventListener('click', stopSubscription);
+      document.getElementById('sub-clear-btn').addEventListener('click', clearSubscriptionOutput);
+      document.getElementById('delete-btn').addEventListener('click', deleteEvent);
+      
+      // Enter key in relay input
+      document.getElementById('relay-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addRelay();
+      });
+    }
+
+    // Connect with NIP-07
+    async function connectNIP07() {
+      try {
+        log('info', '🔐 Verbinde mit NIP-07...');
+
+        // Check if extension is available
+        if (!window.nostr) {
+          throw new Error('Keine NIP-07 Extension gefunden! Bitte installiere Alby, nos2x oder eine andere Nostr-Extension.');
+        }
+
+        const nip07 = new Nip07Plugin();
+        await nip07.initialize();
+        
+        // Login to get identity
+        const identity = await nip07.login();
+        currentUser = identity.pubkey;
+        
+        // Set signer
+        const signer = nip07.getSigner();
+        signerManager.setSigner(signer);
+
+        // Update UI
+        const userInfo = document.getElementById('user-info');
+        userInfo.className = 'user-info';
+        document.getElementById('user-status').innerHTML = `
+          <div><strong>Verbunden!</strong></div>
+          <div class="user-pubkey">npub: ${identity.npub}</div>
+          <div style="font-size: 12px; color: #666; margin-top: 5px;">pubkey: ${identity.pubkey.substring(0, 16)}...</div>
+        `;
+
+        // Enable buttons
+        document.getElementById('publish-btn').disabled = false;
+        document.getElementById('query-my-btn').disabled = false;
+        document.getElementById('delete-btn').disabled = false;
+
+        log('success', `✓ Verbunden als: ${identity.npub}`);
+      } catch (error) {
+        log('error', '✗ Verbindung fehlgeschlagen: ' + error.message);
+      }
+    }
+
+    // Relay Management
+    function addRelay() {
+      const input = document.getElementById('relay-input');
+      const url = input.value.trim();
+
+      if (!url) {
+        log('error', '⚠️ Bitte Relay-URL eingeben');
+        return;
+      }
+
+      if (!url.startsWith('wss://') && !url.startsWith('ws://')) {
+        log('error', '⚠️ Relay-URL muss mit wss:// oder ws:// beginnen');
+        return;
+      }
+
+      relayManager.addRelays([url]);
+      connectedRelays.add(url);
+      updateRelayList();
+      input.value = '';
+      log('success', `✓ Relay hinzugefügt: ${url}`);
+    }
+
+    function addDefaultRelays() {
+      const defaultRelays = [
+        'wss://relay.damus.io',
+        'wss://nos.lol',
+        'wss://relay.nostr.band'
+      ];
+      relayManager.addRelays(defaultRelays);
+      defaultRelays.forEach(r => connectedRelays.add(r));
+      updateRelayList();
+      log('success', '✓ Standard-Relays hinzugefügt');
+    }
+
+    window.removeRelay = function(url) {
+      relayManager.removeRelays([url]);
+      connectedRelays.delete(url);
+      updateRelayList();
+      log('info', `Relay entfernt: ${url}`);
+    };
+
+    function updateRelayList() {
+      const list = document.getElementById('relay-list');
+      const relays = relayManager.getRelays();
+
+      if (relays.length === 0) {
+        list.innerHTML = '<div style="color: #666; padding: 10px;">Keine Relays konfiguriert</div>';
+        return;
+      }
+
+      list.innerHTML = relays.map(url => `
+        <div class="relay-item">
+          <div>
+            <span class="relay-status connected"></span>
+            <span class="relay-url">${url}</span>
+          </div>
+          <button class="danger" onclick="removeRelay('${url}')" style="padding: 6px 12px; font-size: 12px;">
+            Entfernen
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // Create and Publish Event
+    async function createAndPublishEvent() {
+      const content = document.getElementById('event-content').value.trim();
+      
+      if (!content) {
+        log('error', '⚠️ Bitte Nachricht eingeben', 'create-results');
+        return;
+      }
+
+      const output = document.getElementById('create-output');
+      const results = document.getElementById('create-results');
+      results.innerHTML = '';
+      output.style.display = 'block';
+
+      log('info', '📤 Erstelle und publiziere Event...', 'create-results');
+
+      try {
+        const result = await eventManager.createAndPublish('text-note', {
+          content,
+          tags: []
+        }, { timeout: 5000 });
+
+        log('success', `✓ Event erstellt: ${result.event.id}`, 'create-results');
+        log('info', `  Published to ${result.successCount}/${result.totalCount} relays`, 'create-results');
+
+        result.results.forEach(r => {
+          if (r.success) {
+            log('success', `  ✓ ${r.relay}`, 'create-results');
+          } else {
+            log('error', `  ✗ ${r.relay}: ${r.error?.message || 'Failed'}`, 'create-results');
+          }
+        });
+
+        // Clear input
+        document.getElementById('event-content').value = '';
+
+        // Show event ID for deletion
+        document.getElementById('delete-id').value = result.event.id;
+      } catch (error) {
+        log('error', '✗ Fehler: ' + error.message, 'create-results');
+      }
+    }
+
+    // Query Events
+    async function queryMyEvents() {
+      if (!currentUser) {
+        log('error', '⚠️ Bitte erst mit NIP-07 verbinden');
+        return;
+      }
+
+      const limit = parseInt(document.getElementById('query-limit').value) || 10;
+      const output = document.getElementById('query-output');
+      const results = document.getElementById('query-results');
+      results.innerHTML = '';
+      output.style.display = 'block';
+
+      log('info', `🔍 Lade ${limit} eigene Events...`, 'query-results');
+
+      try {
+        const events = await eventManager.queryEvents([
+          { kinds: [1], authors: [currentUser], limit }
+        ], { timeout: 5000 });
+
+        log('success', `✓ ${events.length} Events gefunden`, 'query-results');
+        displayEvents(events);
+      } catch (error) {
+        log('error', '✗ Query fehlgeschlagen: ' + error.message, 'query-results');
+      }
+    }
+
+    async function queryGlobalEvents() {
+      const limit = parseInt(document.getElementById('query-limit').value) || 10;
+      const output = document.getElementById('query-output');
+      const results = document.getElementById('query-results');
+      results.innerHTML = '';
+      output.style.display = 'block';
+
+      log('info', `🔍 Lade ${limit} globale Events...`, 'query-results');
+
+      try {
+        const events = await eventManager.queryEvents([
+          { kinds: [1], limit }
+        ], { timeout: 5000 });
+
+        log('success', `✓ ${events.length} Events gefunden`, 'query-results');
+        displayEvents(events);
+      } catch (error) {
+        log('error', '✗ Query fehlgeschlagen: ' + error.message, 'query-results');
+      }
+    }
+
+    function displayEvents(events) {
+      const display = document.getElementById('events-display');
+      
+      if (events.length === 0) {
+        display.innerHTML = '<div style="color: #666; padding: 10px;">Keine Events gefunden</div>';
+        return;
+      }
+
+      display.innerHTML = events.map(event => {
+        const date = new Date(event.created_at * 1000).toLocaleString('de-DE');
+        const isMine = event.pubkey === currentUser;
+        return `
+          <div class="event-card">
+            <div class="event-header">
+              <span>
+                <span class="badge ${isMine ? 'success' : 'info'}">${isMine ? 'Eigenes Event' : 'Fremdes Event'}</span>
+                ${date}
+              </span>
+              <span>Kind ${event.kind}</span>
+            </div>
+            <div class="event-content">${escapeHtml(event.content)}</div>
+            <div class="event-id">ID: ${event.id}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Subscription
+    function startSubscription() {
+      if (currentSubscription) {
+        log('warning', '⚠️ Subscription bereits aktiv', 'sub-results');
+        return;
+      }
+
+      const output = document.getElementById('sub-output');
+      const results = document.getElementById('sub-results');
+      results.innerHTML = '';
+      output.style.display = 'block';
+
+      log('info', '📡 Starte Subscription...', 'sub-results');
+
+      let count = 0;
+      currentSubscription = eventManager.subscribe(
+        [{ kinds: [1], limit: 20 }],
+        (event) => {
+          count++;
+          const date = new Date(event.created_at * 1000).toLocaleTimeString('de-DE');
+          log('success', `[${count}] ${date} - ${event.content.substring(0, 60)}...`, 'sub-results');
+        }
+      );
+
+      document.getElementById('sub-start-btn').disabled = true;
+      document.getElementById('sub-stop-btn').disabled = false;
+
+      log('info', `Subscription ID: ${currentSubscription.id}`, 'sub-results');
+    }
+
+    function stopSubscription() {
+      if (!currentSubscription) return;
+
+      currentSubscription.close();
+      currentSubscription = null;
+
+      document.getElementById('sub-start-btn').disabled = false;
+      document.getElementById('sub-stop-btn').disabled = true;
+
+      log('info', '📡 Subscription gestoppt', 'sub-results');
+    }
+
+    function clearSubscriptionOutput() {
+      document.getElementById('sub-results').innerHTML = '';
+    }
+
+    // Delete Event
+    async function deleteEvent() {
+      const eventId = document.getElementById('delete-id').value.trim();
+      const reason = document.getElementById('delete-reason').value.trim();
+
+      if (!eventId) {
+        log('error', '⚠️ Bitte Event-ID eingeben', 'delete-results');
+        return;
+      }
+
+      const output = document.getElementById('delete-output');
+      const results = document.getElementById('delete-results');
+      results.innerHTML = '';
+      output.style.display = 'block';
+
+      log('info', `🗑️ Lösche Event ${eventId}...`, 'delete-results');
+
+      try {
+        const result = await eventManager.deleteEvent(eventId, reason, { timeout: 5000 });
+        
+        log('success', `✓ Deletion-Event erstellt: ${result.event.id}`, 'delete-results');
+        log('info', `  Published to ${result.successCount}/${result.totalCount} relays`, 'delete-results');
+
+        document.getElementById('delete-id').value = '';
+        document.getElementById('delete-reason').value = '';
+      } catch (error) {
+        log('error', '✗ Fehler: ' + error.message, 'delete-results');
+      }
+    }
+
+    // Logging
+    function log(type, message, outputId = null) {
+      const className = type;
+      const timestamp = new Date().toLocaleTimeString();
+      const logMessage = `[${timestamp}] ${message}`;
+      
+      console.log(message);
+      
+      if (outputId) {
+        const output = document.getElementById(outputId);
+        if (output) {
+          output.innerHTML += `<span class="${className}">${logMessage}</span>\n`;
+          output.scrollTop = output.scrollHeight;
+        }
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Expose to window for inline handlers
+    window.log = log;
+
+    // Initialize on load
+    initialize().then(() => {
+      setupEventListeners();
+      updateRelayList();
+    });
+    
+    console.log('✓ EventManager Real World Test ready');
+    console.log('Globals: eventManager, relayManager, signerManager');
+    window.eventManager = eventManager;
+    window.relayManager = relayManager;
+    window.signerManager = signerManager;
+  </script>
+</body>
+</html>

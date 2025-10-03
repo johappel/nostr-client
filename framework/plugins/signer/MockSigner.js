@@ -11,6 +11,7 @@ export class MockSigner extends SignerPlugin {
     super();
     this.type = 'mock';
     this._pubkey = pubkey;
+    this._counter = 0;
   }
 
   async getPublicKey() {
@@ -18,24 +19,19 @@ export class MockSigner extends SignerPlugin {
   }
 
   async signEvent(event) {
-    // Generate fake ID and signature
-    const eventData = JSON.stringify([
-      0,
-      this._pubkey,
-      event.created_at,
-      event.kind,
-      event.tags,
-      event.content
-    ]);
+    // Generate fake ID and signature with counter for uniqueness
+    this._counter++;
+    const uniqueId = `mock-event-id-${Date.now()}-${this._counter}`;
+    const uniqueSig = `mock-signature-${Date.now()}-${this._counter}`;
 
     return {
-      id: 'mock-event-id-' + Date.now(),
+      id: uniqueId,
       pubkey: this._pubkey,
       created_at: event.created_at,
       kind: event.kind,
       tags: event.tags,
       content: event.content,
-      sig: 'mock-signature-' + Date.now()
+      sig: uniqueSig
     };
   }
 
