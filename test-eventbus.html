@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventBus Test Suite</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button.secondary {
+            background: #2196F3;
+        }
+        button.secondary:hover {
+            background: #0b7dda;
+        }
+        .console-hint {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .console-hint strong {
+            color: #856404;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+        pre {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 EventBus Test Suite</h1>
+        <p class="subtitle">Nostr Framework - Module 1</p>
+        
+        <div class="console-hint">
+            <strong>📋 Anleitung:</strong><br>
+            1. Öffne die Browser DevTools Console (F12)<br>
+            2. Klicke auf "Run All Tests" oder führe Tests manuell in der Console aus<br>
+            3. Beobachte die Test-Ergebnisse in der Console
+        </div>
+
+        <div class="test-section">
+            <h3>Automatische Tests</h3>
+            <p>Führt die komplette Test-Suite aus dem <code>EventBus.test.js</code> aus:</p>
+            <button onclick="runAutoTests()">▶️ Run All Tests</button>
+            <button onclick="runAutoTestsWithDebug()" class="secondary">🔍 Run Tests (Debug Mode)</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Manuelle Tests</h3>
+            <p>Teste einzelne Features interaktiv in der Console:</p>
+            <button onclick="testBasicEmitOn()">Test 1: Basic Emit/On</button>
+            <button onclick="testMultipleListeners()">Test 2: Multiple Listeners</button>
+            <button onclick="testUnsubscribe()">Test 3: Unsubscribe</button>
+            <button onclick="testOnce()">Test 4: Once</button>
+            <button onclick="testErrorHandling()">Test 5: Error Handling</button>
+            <button onclick="testStats()">Test 6: Statistics</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Quick Tests in Console</h3>
+            <p>Kopiere diese Befehle in die Console:</p>
+            <pre>// Import und Test-Suite ausführen
+import { EventBus, runEventBusTests } from './framework/index.js';
+const results = runEventBusTests();
+console.table(results.tests);
+
+// Oder manuell testen:
+const bus = new EventBus();
+bus.setDebugMode(true);
+bus.on('test', (data) => console.log('Received:', data));
+bus.emit('test', { hello: 'world' });</pre>
+        </div>
+
+        <div class="test-section">
+            <h3>Status <span class="status info">Modul 1/8 implementiert</span></h3>
+            <p>✅ EventBus.js implementiert</p>
+            <p>✅ EventBus.test.js implementiert</p>
+            <p>✅ framework/index.js erstellt</p>
+            <p>⏳ Browser Console Tests werden durchgeführt...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { EventBus, runEventBusTests } from './framework/index.js';
+        
+        // Make available globally for button onclick handlers
+        window.EventBus = EventBus;
+        window.runEventBusTests = runEventBusTests;
+        
+        console.log('✅ EventBus loaded successfully!');
+        console.log('💡 Try: runEventBusTests() to run all tests');
+        console.log('💡 Or use the buttons on the page to run individual tests');
+        
+        // Auto-run tests on load (optional)
+        // runEventBusTests();
+    </script>
+
+    <script>
+        // Test functions accessible from buttons
+        function runAutoTests() {
+            console.clear();
+            console.log('🚀 Running EventBus Test Suite...\n');
+            const results = window.runEventBusTests();
+            console.log('\n📊 Results Summary:');
+            console.table(results.tests);
+        }
+
+        function runAutoTestsWithDebug() {
+            console.clear();
+            console.log('🔍 Running EventBus Test Suite (Debug Mode)...\n');
+            const bus = new window.EventBus();
+            bus.setDebugMode(true);
+            window.debugBus = bus;
+            const results = window.runEventBusTests();
+            console.log('\n📊 Results Summary:');
+            console.table(results.tests);
+            console.log('\n💡 Debug bus available as window.debugBus');
+        }
+
+        function testBasicEmitOn() {
+            console.clear();
+            console.log('🧪 Test 1: Basic Emit/On\n');
+            const bus = new window.EventBus();
+            bus.setDebugMode(true);
+            
+            let testValue = 0;
+            bus.on('test-event', (data) => {
+                testValue = data.value;
+                console.log('✅ Received:', data);
+            });
+            
+            bus.emit('test-event', { value: 42 });
+            console.assert(testValue === 42, 'Event data should be received');
+            console.log('✓ Test 1 passed: Basic emit/on works');
+        }
+
+        function testMultipleListeners() {
+            console.clear();
+            console.log('🧪 Test 2: Multiple Listeners\n');
+            const bus = new window.EventBus();
+            bus.setDebugMode(true);
+            
+            let count1 = 0, count2 = 0;
+            bus.on('multi-test', () => {
+                count1++;
+                console.log('Listener 1 called');
+            });
+            bus.on('multi-test', () => {
+                count2++;
+                console.log('Listener 2 called');
+            });
+            
+            bus.emit('multi-test');
+            console.assert(count1 === 1 && count2 === 1, 'Both listeners should be called');
+            console.log('✓ Test 2 passed: Multiple listeners work');
+        }
+
+        function testUnsubscribe() {
+            console.clear();
+            console.log('🧪 Test 3: Unsubscribe\n');
+            const bus = new window.EventBus();
+            bus.setDebugMode(true);
+            
+            let unsubCount = 0;
+            const unsub = bus.on('unsub-test', () => {
+                unsubCount++;
+                console.log('Listener called, count:', unsubCount);
+            });
+            
+            bus.emit('unsub-test');
+            console.log('Unsubscribing...');
+            unsub();
+            bus.emit('unsub-test');
+            console.assert(unsubCount === 1, 'Should only be called once');
+            console.log('✓ Test 3 passed: Unsubscribe works');
+        }
+
+        function testOnce() {
+            console.clear();
+            console.log('🧪 Test 4: Once\n');
+            const bus = new window.EventBus();
+            bus.setDebugMode(true);
+            
+            let onceCount = 0;
+            bus.once('once-test', () => {
+                onceCount++;
+                console.log('Once listener called, count:', onceCount);
+            });
+            
+            bus.emit('once-test');
+            bus.emit('once-test');
+            console.assert(onceCount === 1, 'Once listener should only fire once');
+            console.log('✓ Test 4 passed: Once works');
+        }
+
+        function testErrorHandling() {
+            console.clear();
+            console.log('🧪 Test 5: Error Handling\n');
+            const bus = new window.EventBus();
+            bus.setDebugMode(true);
+            
+            bus.on('error-test', () => {
+                console.log('Throwing test error...');
+                throw new Error('Test error');
+            });
+            
+            bus.emit('error-test');
+            console.log('✓ Test 5 passed: Error handling works (no crash)');
+        }
+
+        function testStats() {
+            console.clear();
+            console.log('🧪 Test 6: Statistics\n');
+            const bus = new window.EventBus();
+            
+            bus.on('event1', () => {});
+            bus.on('event1', () => {});
+            bus.on('event2', () => {});
+            
+            console.log('Active events:', bus.getEvents());
+            console.log('Listeners for event1:', bus.getListenerCount('event1'));
+            console.log('Total listeners:', bus.getTotalListeners());
+            
+            console.log('✓ Test 6 passed: Statistics work');
+            
+            bus.clear();
+            console.log('After clear - Total listeners:', bus.getTotalListeners());
+        }
+    </script>
+</body>
+</html>

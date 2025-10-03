@@ -473,6 +473,8 @@ Das Framework ist erfolgreich, wenn:
 
 ## Support & Debugging
 
+Teste stets über den VS-Code Liveserver: http://127.0.0.1:5500
+
 Bei Problemen:
 
 1. **Console-Tests prüfen**: Laufen alle Tests?
