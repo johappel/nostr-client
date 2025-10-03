@@ -1,0 +1,28 @@
+{
+  "name": "nostr-client",
+  "version": "1.0.0",
+  "description": "Modular Nostr Client Framework",
+  "type": "module",
+  "main": "framework/index.js",
+  "scripts": {
+    "dev": "npm run serve",
+    "serve": "echo 'Please use VS Code Live Server or similar to serve files'",
+    "test": "echo 'Open test-*.html files in browser to run tests'"
+  },
+  "keywords": [
+    "nostr",
+    "nostr-client",
+    "framework",
+    "nip-07",
+    "decentralized"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "nostr-tools": "^2.8.1"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

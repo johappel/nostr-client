@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NIP-07 Plugin Test</title>
+  
+  <!-- Import Map for nostr-tools via CDN -->
+  <script type="importmap">
+    {
+      "imports": {
+        "nostr-tools/nip19": "https://esm.sh/nostr-tools@2.17.0/nip19",
+        "@noble/hashes/utils": "https://esm.sh/@noble/hashes@1.3.1/utils",
+        "@scure/base": "https://esm.sh/@scure/base@1.1.1"
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 3px solid #9C27B0;
+      padding-bottom: 10px;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .warning {
+      background: #FFF3CD;
+      border-left: 4px solid #FFC107;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+    .warning strong {
+      color: #856404;
+    }
+    .info {
+      background: #D1ECF1;
+      border-left: 4px solid #17A2B8;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+    .success {
+      background: #D4EDDA;
+      border-left: 4px solid #28A745;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+    .error {
+      background: #F8D7DA;
+      border-left: 4px solid #DC3545;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+    button {
+      background: #9C27B0;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px;
+    }
+    button:hover {
+      background: #7B1FA2;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    button.secondary {
+      background: #2196F3;
+    }
+    button.secondary:hover {
+      background: #0b7dda;
+    }
+    button.danger {
+      background: #DC3545;
+    }
+    button.danger:hover {
+      background: #c82333;
+    }
+    .identity-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .identity-card h3 {
+      margin-top: 0;
+    }
+    .identity-card .field {
+      margin: 8px 0;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .identity-card .label {
+      opacity: 0.8;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .extension-info {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .console {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin-top: 10px;
+    }
+    .console .log { color: #d4d4d4; }
+    .console .info { color: #4FC3F7; }
+    .console .warn { color: #FFB74D; }
+    .console .error { color: #EF5350; }
+    .console .success { color: #81C784; }
+  </style>
+</head>
+<body>
+  <h1>🔌 NIP-07 Plugin Test</h1>
+
+  <div class="container">
+    <div class="warning">
+      <strong>⚠️ Voraussetzung:</strong> Diese Seite benötigt eine NIP-07-kompatible Browser-Extension wie:
+      <ul>
+        <li><a href="https://getalby.com" target="_blank" rel="noopener">Alby</a> (empfohlen)</li>
+        <li><a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noopener">nos2x</a></li>
+        <li><a href="https://www.flamingo.me" target="_blank" rel="noopener">Flamingo</a></li>
+      </ul>
+    </div>
+
+    <div id="extension-status"></div>
+  </div>
+
+  <div class="container">
+    <h2>1. Extension-Erkennung</h2>
+    <button onclick="checkExtension()">🔍 Extension prüfen</button>
+    <div id="extension-info"></div>
+  </div>
+
+  <div class="container">
+    <h2>2. Login/Logout</h2>
+    <button id="login-btn" onclick="login()">🔓 Mit Extension verbinden</button>
+    <button id="logout-btn" onclick="logout()" disabled>🔒 Logout</button>
+    <div id="identity-display"></div>
+  </div>
+
+  <div class="container">
+    <h2>3. Event signieren</h2>
+    <button id="sign-btn" onclick="signTestEvent()" disabled>✍️ Test-Event signieren</button>
+    <div id="sign-result"></div>
+  </div>
+
+  <div class="container">
+    <h2>4. NIP-04 Verschlüsselung</h2>
+    <div class="info" style="font-size: 13px;">
+      <strong>ℹ️ Hinweis zu nos2x-fox:</strong>
+      nos2x-fox erfordert explizite Permissions für NIP-04 Encrypt/Decrypt.
+      Wenn du "Insufficient permissions, required 20" siehst, musst du in den Extension-Einstellungen
+      die Berechtigung für diese Seite erteilen. Alternativ: Teste mit Alby Extension.
+    </div>
+    <input type="text" id="encrypt-text" placeholder="Text to encrypt" style="width: 60%; padding: 8px; margin-right: 5px;">
+    <button id="encrypt-btn" onclick="testEncryption()" disabled>🔐 Verschlüsseln</button>
+    <div id="encryption-result"></div>
+  </div>
+
+  <div class="container">
+    <h2>📋 Console Log</h2>
+    <button onclick="clearConsole()">🗑️ Clear</button>
+    <div class="console" id="console"></div>
+  </div>
+
+  <script type="module">
+    import { IdentityManager } from './framework/core/IdentityManager.js';
+    import { Nip07Plugin } from './framework/plugins/auth/Nip07Plugin.js';
+
+    // Global state
+    let manager = null;
+    let plugin = null;
+
+    // Logging helper
+    function log(message, type = 'log') {
+      const console = document.getElementById('console');
+      if (!console) return;
+      
+      const line = document.createElement('div');
+      line.className = type;
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      console.appendChild(line);
+      console.scrollTop = console.scrollHeight;
+    }
+
+    // Wait for extension to load
+    async function waitForExtension(maxWaitMs = 3000) {
+      const startTime = Date.now();
+      while (Date.now() - startTime < maxWaitMs) {
+        if (window.nostr) {
+          return true;
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return false;
+    }
+
+    // Initialize
+    async function init() {
+      log('🚀 Initialisiere NIP-07 Plugin Test...', 'info');
+      
+      // Wait for extension to load (max 3 seconds)
+      log('⏳ Warte auf Extension...', 'info');
+      const extensionLoaded = await waitForExtension();
+      
+      const statusDiv = document.getElementById('extension-status');
+      
+      if (!extensionLoaded) {
+        statusDiv.innerHTML = `
+          <div class="error">
+            <strong>❌ Keine NIP-07 Extension erkannt</strong>
+            <p>Bitte installiere eine NIP-07-kompatible Browser-Extension.</p>
+            <p><small>Wenn die Extension installiert ist, lade die Seite neu.</small></p>
+          </div>
+        `;
+        log('❌ Keine Extension gefunden (nach 3 Sekunden Wartezeit)', 'error');
+        return;
+      }
+
+      statusDiv.innerHTML = `
+        <div class="success">
+          <strong>✅ NIP-07 Extension erkannt!</strong>
+        </div>
+      `;
+      log('✅ Extension erkannt', 'success');
+
+      // Initialize manager and plugin
+      manager = new IdentityManager();
+      plugin = new Nip07Plugin();
+      
+      try {
+        await plugin.initialize();
+        log('✅ Plugin initialisiert', 'success');
+      } catch (error) {
+        log(`⚠️ Plugin-Initialisierung mit Warnung: ${error.message}`, 'warn');
+        // Continue anyway - extension might still work
+      }
+      
+      // Always register plugin and initialize manager
+      try {
+        manager.registerPlugin('nip07', plugin);
+        await manager.initialize();
+        log('✅ Manager initialisiert und Plugin registriert', 'success');
+
+        // Check if already logged in and restore through manager
+        if (await plugin.isLoggedIn()) {
+          try {
+            const identity = await manager.authenticate('nip07');
+            displayIdentity(identity);
+            updateButtonStates(true);
+            log('✅ Session wiederhergestellt', 'success');
+          } catch (error) {
+            log(`⚠️ Session-Wiederherstellung fehlgeschlagen: ${error.message}`, 'warn');
+          }
+        }
+      } catch (error) {
+        log(`❌ Manager-Initialisierung fehlgeschlagen: ${error.message}`, 'error');
+      }
+    }
+
+    // Check extension
+    window.checkExtension = function() {
+      const info = Nip07Plugin.getExtensionInfo();
+      const infoDiv = document.getElementById('extension-info');
+      
+      if (!info) {
+        infoDiv.innerHTML = '<div class="error">❌ Keine Extension verfügbar</div>';
+        return;
+      }
+
+      infoDiv.innerHTML = `
+        <div class="extension-info">
+          <strong>Extension Details:</strong><br>
+          Available: ${info.available ? '✅' : '❌'}<br>
+          NIP-04 Support: ${info.hasNip04 ? '✅' : '❌'}<br>
+          NIP-44 Support: ${info.hasNip44 ? '✅' : '❌'}<br>
+          Methods: ${info.methods.join(', ')}
+        </div>
+      `;
+      
+      log('🔍 Extension-Informationen abgerufen', 'info');
+    };
+
+    // Login
+    window.login = async function() {
+      try {
+        log('🔄 Login wird durchgeführt...', 'info');
+        document.getElementById('login-btn').disabled = true;
+        
+        const identity = await manager.authenticate('nip07');
+        
+        displayIdentity(identity);
+        updateButtonStates(true);
+        
+        log(`✅ Login erfolgreich: ${identity.npub}`, 'success');
+      } catch (error) {
+        log(`❌ Login fehlgeschlagen: ${error.message}`, 'error');
+        document.getElementById('identity-display').innerHTML = `
+          <div class="error">${error.message}</div>
+        `;
+      } finally {
+        document.getElementById('login-btn').disabled = false;
+      }
+    };
+
+    // Logout
+    window.logout = async function() {
+      try {
+        log('🔄 Logout wird durchgeführt...', 'info');
+        
+        await manager.logout();
+        
+        document.getElementById('identity-display').innerHTML = '';
+        updateButtonStates(false);
+        
+        log('✅ Logout erfolgreich', 'success');
+      } catch (error) {
+        log(`❌ Logout fehlgeschlagen: ${error.message}`, 'error');
+      }
+    };
+
+    // Sign test event
+    window.signTestEvent = async function() {
+      try {
+        log('✍️ Signiere Test-Event...', 'info');
+        
+        const signer = manager.getSigner();
+        const pubkey = await signer.getPublicKey();
+        
+        const event = {
+          kind: 1,
+          created_at: Math.floor(Date.now() / 1000),
+          tags: [],
+          content: 'Hello from NIP-07 Plugin Test!',
+          pubkey: pubkey
+        };
+        
+        log(`Event vor Signierung: ${JSON.stringify(event, null, 2)}`, 'info');
+        
+        const signed = await signer.signEvent(event);
+        
+        document.getElementById('sign-result').innerHTML = `
+          <div class="success">
+            <strong>✅ Event erfolgreich signiert!</strong>
+            <div class="extension-info" style="margin-top: 10px;">
+              <strong>Signiertes Event:</strong><br>
+              ${JSON.stringify(signed, null, 2)}
+            </div>
+          </div>
+        `;
+        
+        log('✅ Event erfolgreich signiert', 'success');
+      } catch (error) {
+        log(`❌ Signierung fehlgeschlagen: ${error.message}`, 'error');
+        document.getElementById('sign-result').innerHTML = `
+          <div class="error">${error.message}</div>
+        `;
+      }
+    };
+
+    // Test encryption
+    window.testEncryption = async function() {
+      try {
+        const text = document.getElementById('encrypt-text').value;
+        if (!text) {
+          alert('Bitte Text eingeben!');
+          return;
+        }
+
+        log('🔐 Verschlüssele Text...', 'info');
+        
+        const signer = manager.getSigner();
+        const pubkey = await signer.getPublicKey();
+        
+        // Encrypt to self for testing
+        const encrypted = await signer.nip04Encrypt(pubkey, text);
+        
+        log('🔓 Entschlüssele Text...', 'info');
+        const decrypted = await signer.nip04Decrypt(pubkey, encrypted);
+        
+        document.getElementById('encryption-result').innerHTML = `
+          <div class="success">
+            <strong>✅ Verschlüsselung erfolgreich!</strong>
+            <div class="extension-info" style="margin-top: 10px;">
+              <strong>Original:</strong> ${text}<br>
+              <strong>Verschlüsselt:</strong> ${encrypted}<br>
+              <strong>Entschlüsselt:</strong> ${decrypted}
+            </div>
+          </div>
+        `;
+        
+        log('✅ Verschlüsselung/Entschlüsselung erfolgreich', 'success');
+      } catch (error) {
+        log(`❌ Verschlüsselung fehlgeschlagen: ${error.message}`, 'error');
+        document.getElementById('encryption-result').innerHTML = `
+          <div class="error">${error.message}</div>
+        `;
+      }
+    };
+
+    // Display identity
+    function displayIdentity(identity) {
+      document.getElementById('identity-display').innerHTML = `
+        <div class="identity-card">
+          <h3>👤 Connected Identity</h3>
+          <div class="field">
+            <div class="label">Public Key (hex)</div>
+            ${identity.pubkey}
+          </div>
+          <div class="field">
+            <div class="label">Public Key (npub)</div>
+            ${identity.npub}
+          </div>
+          <div class="field">
+            <div class="label">Provider</div>
+            ${identity.provider}
+          </div>
+          <div class="field">
+            <div class="label">Capabilities</div>
+            Sign: ${identity.capabilities.canSign ? '✅' : '❌'} | 
+            Encrypt: ${identity.capabilities.canEncrypt ? '✅' : '❌'} | 
+            Decrypt: ${identity.capabilities.canDecrypt ? '✅' : '❌'}
+          </div>
+        </div>
+      `;
+    }
+
+    // Update button states
+    function updateButtonStates(isLoggedIn) {
+      document.getElementById('login-btn').disabled = isLoggedIn;
+      document.getElementById('logout-btn').disabled = !isLoggedIn;
+      document.getElementById('sign-btn').disabled = !isLoggedIn;
+      document.getElementById('encrypt-btn').disabled = !isLoggedIn;
+    }
+
+    // Clear console
+    window.clearConsole = function() {
+      document.getElementById('console').innerHTML = '';
+    };
+
+    // Export for console testing
+    window.testNip07 = { manager, plugin, log };
+
+    // Auto-init
+    init();
+  </script>
+</body>
+</html>
