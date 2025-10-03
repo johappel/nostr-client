@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IdentityManager Test</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 3px solid #4CAF50;
+      padding-bottom: 10px;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .test-section {
+      margin-bottom: 30px;
+    }
+    .test-section h2 {
+      color: #2196F3;
+      margin-bottom: 15px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button.secondary {
+      background: #2196F3;
+    }
+    button.secondary:hover {
+      background: #0b7dda;
+    }
+    button.danger {
+      background: #f44336;
+    }
+    button.danger:hover {
+      background: #da190b;
+    }
+    .console {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .console .log { color: #d4d4d4; }
+    .console .info { color: #4FC3F7; }
+    .console .warn { color: #FFB74D; }
+    .console .error { color: #EF5350; }
+    .console .success { color: #81C784; }
+    .status {
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    .status.success {
+      background: #C8E6C9;
+      color: #2E7D32;
+      border-left: 4px solid #4CAF50;
+    }
+    .status.error {
+      background: #FFCDD2;
+      color: #C62828;
+      border-left: 4px solid #f44336;
+    }
+    .status.info {
+      background: #B3E5FC;
+      color: #01579B;
+      border-left: 4px solid #2196F3;
+    }
+    .identity-info {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    .identity-info h3 {
+      margin-top: 0;
+      color: #666;
+    }
+    .identity-info .field {
+      margin: 5px 0;
+      font-family: monospace;
+    }
+    .identity-info .label {
+      font-weight: bold;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔐 IdentityManager Test Suite</h1>
+
+  <div class="container">
+    <div class="test-section">
+      <h2>1. Automatische Tests</h2>
+      <button onclick="runAllTests()">🧪 Alle Tests ausführen</button>
+      <div id="test-status"></div>
+      <div class="console" id="test-console"></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="test-section">
+      <h2>2. Manuelle Tests</h2>
+      
+      <h3>Plugin-Management</h3>
+      <button onclick="registerTestPlugin()">Registriere Test Plugin</button>
+      <button onclick="listPlugins()">Liste Plugins</button>
+      
+      <h3>Authentifizierung</h3>
+      <button class="secondary" onclick="login()">🔓 Login (Test Plugin)</button>
+      <button class="danger" onclick="logout()">🔒 Logout</button>
+      <button onclick="checkAuth()">Status prüfen</button>
+      
+      <h3>Identity-Informationen</h3>
+      <button onclick="showIdentity()">Zeige Identity</button>
+      <button onclick="getPublicKey()">Zeige Public Key</button>
+      <button onclick="getSigner()">Zeige Signer</button>
+      
+      <div id="identity-display"></div>
+      <div class="console" id="manual-console"></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="test-section">
+      <h2>3. Event-Tests</h2>
+      <button onclick="subscribeEvents()">Events abonnieren</button>
+      <button onclick="clearEvents()">Events löschen</button>
+      <div class="console" id="events-console"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { IdentityManager } from './framework/core/IdentityManager.js';
+    import { runIdentityManagerTests } from './framework/core/IdentityManager.test.js';
+    import { AuthPlugin } from './framework/plugins/auth/AuthPlugin.js';
+
+    // Mock Auth Plugin for testing
+    class MockAuthPlugin extends AuthPlugin {
+      constructor() {
+        super();
+        this.name = 'mock';
+        this.displayName = 'Mock Auth';
+        this._loggedIn = false;
+      }
+
+      async initialize() {
+        this._markInitialized();
+        console.log('[MockAuth] Initialized');
+      }
+
+      async isLoggedIn() {
+        return this._loggedIn;
+      }
+
+      async getIdentity() {
+        if (!this._loggedIn) return null;
+        return {
+          pubkey: 'abc123def456',
+          npub: 'npub1mock123',
+          provider: 'mock',
+          displayName: 'Test User',
+          metadata: {
+            name: 'Test User',
+            about: 'A test user for IdentityManager'
+          },
+          capabilities: {
+            canSign: true,
+            canEncrypt: true,
+            canDecrypt: true
+          }
+        };
+      }
+
+      async login(credentials) {
+        console.log('[MockAuth] Login called');
+        this._loggedIn = true;
+        return await this.getIdentity();
+      }
+
+      async logout() {
+        console.log('[MockAuth] Logout called');
+        this._loggedIn = false;
+      }
+
+      getSigner() {
+        return {
+          type: 'mock',
+          getPublicKey: async () => 'abc123def456',
+          signEvent: async (event) => {
+            console.log('[MockSigner] Signing event:', event);
+            return { ...event, sig: 'mock-signature-12345' };
+          }
+        };
+      }
+    }
+
+    // Global state
+    let manager = null;
+    let mockPlugin = null;
+    let eventListeners = [];
+
+    // Initialize
+    function init() {
+      manager = new IdentityManager();
+      mockPlugin = new MockAuthPlugin();
+      log('✅ IdentityManager initialisiert', 'manual', 'success');
+    }
+
+    // Logging helper
+    function log(message, target = 'manual', type = 'log') {
+      const console = document.getElementById(`${target}-console`);
+      if (!console) return;
+      
+      const line = document.createElement('div');
+      line.className = type;
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      console.appendChild(line);
+      console.scrollTop = console.scrollHeight;
+    }
+
+    // Test Status Helper
+    function showStatus(message, type = 'info') {
+      const statusDiv = document.getElementById('test-status');
+      statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+    }
+
+    // Test Functions
+    window.runAllTests = async function() {
+      const testConsole = document.getElementById('test-console');
+      testConsole.innerHTML = '';
+      
+      showStatus('🔄 Tests werden ausgeführt...', 'info');
+      
+      // Capture console output
+      const originalLog = console.log;
+      const originalError = console.error;
+      
+      console.log = (...args) => {
+        log(args.join(' '), 'test', 'log');
+        originalLog(...args);
+      };
+      
+      console.error = (...args) => {
+        log(args.join(' '), 'test', 'error');
+        originalError(...args);
+      };
+      
+      try {
+        const results = await runIdentityManagerTests();
+        
+        if (results.failed === 0) {
+          showStatus(`✅ Alle Tests bestanden! (${results.passed}/${results.passed + results.failed})`, 'success');
+        } else {
+          showStatus(`❌ ${results.failed} Test(s) fehlgeschlagen (${results.passed}/${results.passed + results.failed})`, 'error');
+        }
+      } catch (error) {
+        showStatus(`❌ Test-Fehler: ${error.message}`, 'error');
+        log(`Fehler: ${error.message}`, 'test', 'error');
+      }
+      
+      // Restore console
+      console.log = originalLog;
+      console.error = originalError;
+    };
+
+    window.registerTestPlugin = function() {
+      if (!mockPlugin._initialized) {
+        mockPlugin.initialize();
+      }
+      manager.registerPlugin('mock', mockPlugin);
+      log('✅ Mock Plugin registriert', 'manual', 'success');
+      log(`Registrierte Plugins: ${manager.getRegisteredPlugins().join(', ')}`, 'manual', 'info');
+    };
+
+    window.listPlugins = function() {
+      const plugins = manager.getRegisteredPlugins();
+      log(`📋 Registrierte Plugins (${plugins.length}):`, 'manual', 'info');
+      plugins.forEach(p => log(`  - ${p}`, 'manual', 'log'));
+    };
+
+    window.login = async function() {
+      try {
+        if (!manager.getRegisteredPlugins().includes('mock')) {
+          registerTestPlugin();
+        }
+        
+        await manager.initialize();
+        const identity = await manager.authenticate('mock');
+        log('✅ Login erfolgreich!', 'manual', 'success');
+        log(`Pubkey: ${identity.pubkey}`, 'manual', 'info');
+        log(`Provider: ${identity.provider}`, 'manual', 'info');
+        showIdentity();
+      } catch (error) {
+        log(`❌ Login fehlgeschlagen: ${error.message}`, 'manual', 'error');
+      }
+    };
+
+    window.logout = async function() {
+      try {
+        await manager.logout();
+        log('✅ Logout erfolgreich', 'manual', 'success');
+        document.getElementById('identity-display').innerHTML = '';
+      } catch (error) {
+        log(`❌ Logout fehlgeschlagen: ${error.message}`, 'manual', 'error');
+      }
+    };
+
+    window.checkAuth = function() {
+      const isAuth = manager.isAuthenticated();
+      log(`🔍 Authentifiziert: ${isAuth}`, 'manual', isAuth ? 'success' : 'warn');
+    };
+
+    window.showIdentity = function() {
+      const identity = manager.getCurrentIdentity();
+      const display = document.getElementById('identity-display');
+      
+      if (!identity) {
+        display.innerHTML = '<div class="status error">❌ Keine aktive Identity</div>';
+        return;
+      }
+      
+      display.innerHTML = `
+        <div class="identity-info">
+          <h3>👤 Aktuelle Identity</h3>
+          <div class="field"><span class="label">Pubkey:</span> ${identity.pubkey}</div>
+          <div class="field"><span class="label">Npub:</span> ${identity.npub}</div>
+          <div class="field"><span class="label">Provider:</span> ${identity.provider}</div>
+          <div class="field"><span class="label">Name:</span> ${identity.displayName || 'N/A'}</div>
+          <div class="field"><span class="label">Capabilities:</span></div>
+          <div class="field">  - Sign: ${identity.capabilities.canSign ? '✅' : '❌'}</div>
+          <div class="field">  - Encrypt: ${identity.capabilities.canEncrypt ? '✅' : '❌'}</div>
+          <div class="field">  - Decrypt: ${identity.capabilities.canDecrypt ? '✅' : '❌'}</div>
+        </div>
+      `;
+      
+      log('✅ Identity angezeigt', 'manual', 'success');
+    };
+
+    window.getPublicKey = function() {
+      const pubkey = manager.getPublicKey();
+      if (pubkey) {
+        log(`🔑 Public Key: ${pubkey}`, 'manual', 'success');
+      } else {
+        log('❌ Kein Public Key verfügbar (nicht eingeloggt)', 'manual', 'warn');
+      }
+    };
+
+    window.getSigner = function() {
+      const signer = manager.getSigner();
+      if (signer) {
+        log(`✅ Signer verfügbar (Typ: ${signer.type})`, 'manual', 'success');
+        log(`Signer-Methoden: ${Object.keys(signer).join(', ')}`, 'manual', 'info');
+      } else {
+        log('❌ Kein Signer verfügbar (nicht eingeloggt)', 'manual', 'warn');
+      }
+    };
+
+    window.subscribeEvents = function() {
+      // Clear old listeners
+      eventListeners.forEach(unsub => unsub());
+      eventListeners = [];
+      
+      const events = [
+        'identity:initialized',
+        'identity:plugin-registered',
+        'identity:login',
+        'identity:logout',
+        'identity:changed',
+        'identity:error',
+        'identity:restored'
+      ];
+      
+      events.forEach(eventName => {
+        const unsub = manager.on(eventName, (data) => {
+          log(`📡 Event: ${eventName}`, 'events', 'info');
+          if (data) {
+            log(`   Data: ${JSON.stringify(data, null, 2)}`, 'events', 'log');
+          }
+        });
+        eventListeners.push(unsub);
+      });
+      
+      log('✅ Events abonniert', 'events', 'success');
+      log(`Überwachte Events: ${events.join(', ')}`, 'events', 'info');
+    };
+
+    window.clearEvents = function() {
+      document.getElementById('events-console').innerHTML = '';
+      log('✅ Event-Log gelöscht', 'events', 'success');
+    };
+
+    // Auto-init
+    init();
+    log('🚀 Test-Umgebung bereit!', 'manual', 'success');
+    log('💡 Tipp: Öffne die Browser-Console für detaillierte Logs', 'manual', 'info');
+  </script>
+</body>
+</html>
