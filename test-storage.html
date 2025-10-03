@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StorageManager Test</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      border-bottom: 3px solid #8b5cf6;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #666;
+      margin-top: 30px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f9f9f9;
+      border-left: 4px solid #8b5cf6;
+      border-radius: 4px;
+    }
+    button {
+      background: #8b5cf6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #7c3aed;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    #output {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      max-height: 500px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      margin-top: 20px;
+    }
+    .success { color: #4ade80; }
+    .error { color: #f87171; }
+    .info { color: #60a5fa; }
+    .warning { color: #fbbf24; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .stat-card {
+      background: white;
+      padding: 15px;
+      border-radius: 4px;
+      border: 1px solid #e5e7eb;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #6b7280;
+      text-transform: uppercase;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #8b5cf6;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🗄️ StorageManager Test</h1>
+    
+    <div class="test-section">
+      <h2>Unit Tests</h2>
+      <button id="runTests">Run Unit Tests</button>
+    </div>
+
+    <div class="test-section">
+      <h2>Storage Operations</h2>
+      <button id="saveEvents">Save Test Events</button>
+      <button id="queryEvents">Query Events</button>
+      <button id="deleteEvents">Delete Events</button>
+      <button id="clearStorage">Clear Storage</button>
+      <button id="getStats">Get Stats</button>
+    </div>
+
+    <div class="test-section">
+      <h2>Framework Integration</h2>
+      <button id="testFramework">Test Complete Framework</button>
+      <button id="testSync">Test Sync (requires Relay)</button>
+    </div>
+
+    <h2>Statistics</h2>
+    <div class="stats" id="stats">
+      <div class="stat-card">
+        <div class="stat-label">Events Stored</div>
+        <div class="stat-value" id="eventCount">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Storage Size (KB)</div>
+        <div class="stat-value" id="storageSize">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Last Operation</div>
+        <div class="stat-value" id="lastOp" style="font-size: 14px;">-</div>
+      </div>
+    </div>
+
+    <h2>Console Output</h2>
+    <div id="output"></div>
+  </div>
+
+  <script type="module">
+    import { StorageManager } from './framework/core/StorageManager.js';
+    import { LocalStoragePlugin } from './framework/plugins/storage/LocalStoragePlugin.js';
+    import { NostrFramework } from './framework/index.js';
+    import { runStorageManagerTests } from './framework/core/StorageManager.test.js';
+
+    const output = document.getElementById('output');
+    
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const className = type;
+      output.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+      output.scrollTop = output.scrollHeight;
+    }
+
+    // Initialize StorageManager
+    const manager = new StorageManager();
+    const plugin = new LocalStoragePlugin({ keyPrefix: 'demo_' });
+    
+    async function initStorage() {
+      try {
+        await manager.initialize(plugin);
+        log('✓ StorageManager initialized', 'success');
+        await updateStats();
+      } catch (error) {
+        log(`✗ Initialization failed: ${error.message}`, 'error');
+      }
+    }
+
+    async function updateStats() {
+      try {
+        const stats = await manager.getStats();
+        document.getElementById('eventCount').textContent = stats.eventCount;
+        document.getElementById('storageSize').textContent = stats.approximateSizeKB;
+      } catch (error) {
+        log(`Failed to update stats: ${error.message}`, 'error');
+      }
+    }
+
+    // Test data
+    function createTestEvents(count = 5) {
+      const events = [];
+      for (let i = 0; i < count; i++) {
+        events.push({
+          id: `test_${Date.now()}_${i}`,
+          kind: 1,
+          pubkey: `pubkey_${i % 3}`,
+          content: `Test event ${i} - ${new Date().toISOString()}`,
+          tags: [['t', 'test'], ['p', `user${i}`]],
+          created_at: Math.floor(Date.now() / 1000),
+          sig: 'dummy_signature'
+        });
+      }
+      return events;
+    }
+
+    // Event Handlers
+    document.getElementById('runTests').addEventListener('click', async () => {
+      log('Running unit tests...', 'info');
+      const results = runStorageManagerTests();
+      log(`\n=== Test Results ===`, 'info');
+      log(`Passed: ${results.passed}`, 'success');
+      log(`Failed: ${results.failed}`, results.failed > 0 ? 'error' : 'success');
+    });
+
+    document.getElementById('saveEvents').addEventListener('click', async () => {
+      try {
+        const events = createTestEvents(5);
+        log(`Saving ${events.length} events...`, 'info');
+        const count = await manager.save(events);
+        log(`✓ Saved ${count} events`, 'success');
+        document.getElementById('lastOp').textContent = 'Save';
+        await updateStats();
+      } catch (error) {
+        log(`✗ Save failed: ${error.message}`, 'error');
+      }
+    });
+
+    document.getElementById('queryEvents').addEventListener('click', async () => {
+      try {
+        log('Querying events...', 'info');
+        const events = await manager.query([{ kinds: [1] }]);
+        log(`✓ Found ${events.length} events`, 'success');
+        events.slice(0, 3).forEach(event => {
+          log(`  - ${event.id}: ${event.content.substring(0, 50)}...`, 'info');
+        });
+        document.getElementById('lastOp').textContent = 'Query';
+      } catch (error) {
+        log(`✗ Query failed: ${error.message}`, 'error');
+      }
+    });
+
+    document.getElementById('deleteEvents').addEventListener('click', async () => {
+      try {
+        const events = await manager.query([{ kinds: [1] }]);
+        if (events.length === 0) {
+          log('No events to delete', 'warning');
+          return;
+        }
+        const idsToDelete = events.slice(0, 2).map(e => e.id);
+        log(`Deleting ${idsToDelete.length} events...`, 'info');
+        const count = await manager.delete(idsToDelete);
+        log(`✓ Deleted ${count} events`, 'success');
+        document.getElementById('lastOp').textContent = 'Delete';
+        await updateStats();
+      } catch (error) {
+        log(`✗ Delete failed: ${error.message}`, 'error');
+      }
+    });
+
+    document.getElementById('clearStorage').addEventListener('click', async () => {
+      try {
+        if (!confirm('Clear all storage? This cannot be undone.')) return;
+        log('Clearing storage...', 'warning');
+        await manager.clear();
+        log('✓ Storage cleared', 'success');
+        document.getElementById('lastOp').textContent = 'Clear';
+        await updateStats();
+      } catch (error) {
+        log(`✗ Clear failed: ${error.message}`, 'error');
+      }
+    });
+
+    document.getElementById('getStats').addEventListener('click', async () => {
+      try {
+        const stats = await manager.getStats();
+        log('=== Storage Statistics ===', 'info');
+        log(`Events: ${stats.eventCount}`, 'info');
+        log(`Size: ${stats.approximateSizeBytes} bytes (${stats.approximateSizeKB} KB)`, 'info');
+        await updateStats();
+      } catch (error) {
+        log(`✗ Get stats failed: ${error.message}`, 'error');
+      }
+    });
+
+    document.getElementById('testFramework').addEventListener('click', async () => {
+      try {
+        log('=== Testing Complete Framework ===', 'info');
+        
+        const nostr = new NostrFramework({
+          relays: ['wss://relay.damus.io'],
+          storage: new LocalStoragePlugin({ keyPrefix: 'framework_' }),
+          debug: false
+        });
+        
+        log('Initializing framework...', 'info');
+        await nostr.initialize();
+        log('✓ Framework initialized', 'success');
+        
+        // Test storage
+        const testEvents = createTestEvents(3);
+        await nostr.storage.save(testEvents);
+        log('✓ Events saved via framework', 'success');
+        
+        const stored = await nostr.storage.query([{ kinds: [1] }]);
+        log(`✓ Retrieved ${stored.length} events via framework`, 'success');
+        
+        const stats = await nostr.storage.getStats();
+        log(`✓ Storage stats: ${stats.eventCount} events, ${stats.approximateSizeKB} KB`, 'success');
+        
+        log('✓ Framework test completed successfully', 'success');
+      } catch (error) {
+        log(`✗ Framework test failed: ${error.message}`, 'error');
+        console.error(error);
+      }
+    });
+
+    document.getElementById('testSync').addEventListener('click', async () => {
+      try {
+        log('=== Testing Storage Sync ===', 'info');
+        log('Using relay-rpi.edufeed.org', 'info');
+        
+        const nostr = new NostrFramework({
+          relays: [
+            'wss://relay-rpi.edufeed.org'
+          ],
+          storage: new LocalStoragePlugin({ keyPrefix: 'sync_' }),
+          debug: false
+        });
+        
+        await nostr.initialize();
+        log('✓ Framework initialized', 'success');
+        
+        log('Fetching events from relays...', 'info');
+        const result = await nostr.storage.sync({
+          filters: [{ kinds: [1], limit: 10 }]
+        });
+        
+        log(`✓ Sync completed: ${result.saved}/${result.total} events saved`, 'success');
+        
+        const stats = await nostr.storage.getStats();
+        log(`✓ Storage now has ${stats.eventCount} events`, 'success');
+        
+      } catch (error) {
+        log(`✗ Sync test failed: ${error.message}`, 'error');
+        console.error(error);
+      }
+    });
+
+    // Initialize on load
+    initStorage().then(() => {
+      log('=== StorageManager Test Ready ===', 'success');
+      log('Click buttons above to test storage operations', 'info');
+    });
+  </script>
+</body>
+</html>
