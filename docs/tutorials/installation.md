@@ -18,7 +18,7 @@ Bevor Sie mit der Installation beginnen, stellen Sie sicher, dass Sie folgende A
 Die Installation über NPM ist die empfohlene Methode für die meisten Projekte.
 
 ```bash
-npm install @nostr/framework
+npm install @johappel/nostr-framework
 ```
 
 #### Vorteile
@@ -34,10 +34,10 @@ npm install @nostr/framework
 
 ```javascript
 // ES6-Module
-import { NostrFramework, LocalStoragePlugin } from '@nostr/framework';
+import { NostrFramework, LocalStoragePlugin } from '@johappel/nostr-framework';
 
 // CommonJS (Node.js)
-const { NostrFramework, LocalStoragePlugin } = require('@nostr/framework');
+const { NostrFramework, LocalStoragePlugin } = require('@johappel/nostr-framework');
 ```
 
 ### Methode 2: CDN (für schnelle Prototypen und Demos)
@@ -47,17 +47,17 @@ Die CDN-Methode ist ideal für schnelle Tests, Demos oder wenn Sie keinen Build-
 ```html
 <!-- JSR CDN -->
 <script type="module">
-  import { NostrFramework } from 'https://cdn.jsr.io/@nostr/framework/index.js';
+  import { NostrFramework } from 'https://cdn.jsr.io/@johappel/nostr-framework/framework/index.js';
 </script>
 
 <!-- jsDelivr CDN -->
 <script type="module">
-  import { NostrFramework } from 'https://cdn.jsdelivr.net/npm/@nostr/framework/dist/index.js';
+  import { NostrFramework } from 'https://cdn.jsdelivr.net/npm/@johappel/nostr-framework/framework/index.js';
 </script>
 
 <!-- UNPKG CDN -->
 <script type="module">
-  import { NostrFramework } from 'https://unpkg.com/@nostr/framework/dist/index.js';
+  import { NostrFramework } from 'https://unpkg.com/@johappel/nostr-framework/framework/index.js';
 </script>
 ```
 
@@ -127,7 +127,7 @@ npm install /pfad/zum/framework/nostr-framework-x.x.x.tgz
     </div>
     
     <script type="module">
-        import { NostrFramework, LocalStoragePlugin } from '@nostr/framework';
+        import { NostrFramework, LocalStoragePlugin } from '@johappel/nostr-framework';
         
         // Ihr Code hier
     </script>
@@ -146,12 +146,12 @@ cd my-nostr-app
 npm install
 
 # Nostr Framework hinzufügen
-npm install @nostr/framework
+npm install @johappel/nostr-framework
 ```
 
 ```javascript
 // main.js
-import { NostrFramework, LocalStoragePlugin } from '@nostr/framework';
+import { NostrFramework, LocalStoragePlugin } from '@johappel/nostr-framework';
 
 const nostr = new NostrFramework({
     relays: ['wss://relay.damus.io'],
@@ -172,7 +172,7 @@ cd my-nostr-server
 npm init -y
 
 # Abhängigkeiten installieren
-npm install @nostr/framework
+npm install @johappel/nostr-framework
 npm install --save-dev @types/node
 ```
 
@@ -187,7 +187,7 @@ import { fetch } from 'node-fetch';
 global.WebSocket = WebSocket;
 global.fetch = fetch;
 
-import { NostrFramework } from '@nostr/framework';
+import { NostrFramework } from '@johappel/nostr-framework';
 
 const nostr = new NostrFramework({
     relays: ['wss://relay.damus.io']
@@ -391,21 +391,21 @@ const nostr = new NostrFramework({
 
 #### 1. Modul nicht gefunden
 
-**Problem:** `Cannot resolve '@nostr/framework'`
+**Problem:** `Cannot resolve '@johappel/nostr-framework'`
 
 **Lösung:**
 ```bash
 # Überprüfen Sie die Installation
-npm list @nostr/framework
+npm list @johappel/nostr-framework
 
 # Neu installieren
-npm uninstall @nostr/framework
-npm install @nostr/framework
+npm uninstall @johappel/nostr-framework
+npm install @johappel/nostr-framework
 ```
 
 #### 2. TypeScript-Fehler
 
-**Problem:** `Cannot find module '@nostr/framework' or its corresponding type declarations.`
+**Problem:** `Cannot find module '@johappel/nostr-framework' or its corresponding type declarations.`
 
 **Lösung:**
 ```bash

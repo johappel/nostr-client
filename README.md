@@ -1,12 +1,37 @@
-# Nostr Client Framework
+# Nostr Framework
 
 Ein modulares, plugin-basiertes Framework für Nostr-Client-Entwicklung mit Multi-Provider-Authentifizierung.
+
+[![npm version](https://badge.fury.io/js/@johappel%2Fnostr-framework.svg)](https://badge.fury.io/js/@johappel%2Fnostr-framework)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 🚀 Quick Start
 
 ### 1. Installation
 
 ```bash
+npm install @johappel/nostr-framework
+```
+
+### 2. Basic Usage
+
+```javascript
+import { NostrFramework } from '@johappel/nostr-framework';
+
+const nostr = new NostrFramework({
+    relays: ['wss://relay.damus.io', 'wss://nos.lol']
+});
+
+await nostr.initialize();
+```
+
+### 3. Development Setup
+
+For local development:
+
+```bash
+git clone https://github.com/johappel/nostr-client.git
+cd nostr-client
 npm install
 ```
 
@@ -224,18 +249,23 @@ Das NIP-07 Plugin benötigt eine installierte Browser-Extension:
 - [x] NIP-07 Plugin
 
 ### ⏳ Phase 2: Weitere Module (In Planung)
-- [ ] SignerManager
-- [ ] TemplateEngine
-- [ ] RelayManager
-- [ ] EventManager
-- [ ] StorageManager
+- [x] SignerManager
+- [x] TemplateEngine
+- [x] RelayManager
+- [x] EventManager
+- [x] StorageManager
 
 ### 🔮 Phase 3: Weitere Auth-Plugins
-- [ ] NIP-46 Plugin (Bunker)
+- [x] NIP-46 Plugin (Bunker)
 - [ ] Local Key Plugin (nsec)
 - [ ] WordPress API Plugin
 
-Siehe [`framework/AGENTS.md`](framework/AGENTS.md) für die vollständige Implementierungs-Roadmap.
+### 🔮 Phase 4: Dokumentation
+- [x] API-Dokumentation
+- [x] Quickstart & Installation
+- [ ] Tutorials
+- [ ] Beispiele
+
 
 ## 📚 Dokumentation
 

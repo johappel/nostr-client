@@ -1,23 +1,57 @@
 {
-  "name": "nostr-client",
+  "name": "@johappel/nostr-framework",
   "version": "1.0.0",
   "description": "Modular Nostr Client Framework",
   "type": "module",
   "main": "framework/index.js",
+  "module": "framework/index.js",
+  "exports": {
+    ".": {
+      "import": "./framework/index.js",
+      "require": "./framework/index.js"
+    },
+    "./plugins/*": {
+      "import": "./framework/plugins/*/index.js"
+    },
+    "./templates/*": {
+      "import": "./framework/templates/*.js"
+    }
+  },
+  "files": [
+    "framework/",
+    "docs/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "dev": "npm run serve",
     "serve": "echo 'Please use VS Code Live Server or similar to serve files'",
-    "test": "echo 'Open test-*.html files in browser to run tests'"
+    "test": "echo 'Open test-*.html files in browser to run tests'",
+    "prepublishOnly": "npm run test",
+    "build": "echo 'No build step required - ES modules ready'",
+    "publish-npm": "npm publish --access public"
   },
   "keywords": [
     "nostr",
     "nostr-client",
     "framework",
     "nip-07",
-    "decentralized"
+    "nip-46",
+    "decentralized",
+    "web3",
+    "protocol",
+    "social"
   ],
-  "author": "",
+  "author": "johappel",
   "license": "MIT",
+  "homepage": "https://github.com/johappel/nostr-client#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johappel/nostr-client.git"
+  },
+  "bugs": {
+    "url": "https://github.com/johappel/nostr-client/issues"
+  },
   "dependencies": {
     "nostr-tools": "^2.8.1"
   },
