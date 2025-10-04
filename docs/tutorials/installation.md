@@ -1,228 +1,432 @@
-# Installationsanleitung
+# Installation Guide
 
-Diese Anleitung zeigt Ihnen verschiedene Möglichkeiten, das Nostr Framework zu installieren und in Ihren Projekten zu verwenden.
+This guide covers different ways to install and set up the Nostr Framework v1.1.0.
 
-## Voraussetzungen
+## Table of Contents
 
-Bevor Sie mit der Installation beginnen, stellen Sie sicher, dass Sie folgende Anforderungen erfüllen:
+1. [NPM Installation](#npm-installation)
+2. [CDN Installation](#cdn-installation)
+3. [Development Setup](#development-setup)
+4. [Configuration](#configuration)
+5. [Testing](#testing)
+6. [Browser Support](#browser-support)
+7. [Troubleshooting](#troubleshooting)
 
-- **Node.js** Version 14.0 oder höher (für die Entwicklung)
-- **npm** Version 6.0 oder höher oder **yarn** Version 1.22 oder höher
-- Ein moderner Webbrowser (Chrome 88+, Firefox 85+, Safari 14+ oder Edge 88+)
-- Grundkenntnisse in JavaScript (ES6+)
+## NPM Installation
 
-## Installationsmethoden
+### Prerequisites
 
-### Methode 1: NPM (empfohlen für Produktionsprojekte)
+- Node.js 18.0.0 or higher
+- npm or yarn package manager
 
-Die Installation über NPM ist die empfohlene Methode für die meisten Projekte.
+### Install Package
 
 ```bash
-npm install @johappel/nostr-framework
+npm install @johappel/nostr-framework@1.1.0
 ```
 
-#### Vorteile
-- Automatische Verwaltung von Abhängigkeiten
-- Einfache Updates mit `npm update`
-- Kompatibel mit Build-Tools wie Webpack, Rollup oder Vite
-- Unterstützung für TypeScript-Typen
-
-#### Nachteile
-- Erfordert einen Build-Schritt für Browser-Anwendungen
-
-#### Verwendung
+### Basic Setup
 
 ```javascript
-// ES6-Module
-import { NostrFramework, LocalStoragePlugin } from '@johappel/nostr-framework';
+import { NostrFramework } from '@johappel/nostr-framework';
 
-// CommonJS (Node.js)
-const { NostrFramework, LocalStoragePlugin } = require('@johappel/nostr-framework');
+const nostr = new NostrFramework();
+await nostr.initialize();
+
+// Authenticate with NIP-07 extension
+const identity = await nostr.authenticate('nip07');
+console.log('Logged in:', identity.displayName || identity.npub);
 ```
 
-### Methode 2: CDN (für schnelle Prototypen und Demos)
+### Individual Plugin Imports
 
-Die CDN-Methode ist ideal für schnelle Tests, Demos oder wenn Sie keinen Build-Prozess verwenden möchten.
+```javascript
+// Import specific plugins
+import { Nip07Plugin } from '@johappel/nostr-framework/plugins/auth/Nip07Plugin.js';
+import { Nip46Plugin } from '@johappel/nostr-framework/plugins/auth/Nip46Plugin.js';
+import { NsecPlugin } from '@johappel/nostr-framework/plugins/auth/NsecPlugin.js';
+
+// Import configuration
+import { Config } from '@johappel/nostr-framework/config.js';
+```
+
+## CDN Installation
+
+### Official CDN (jsDelivr)
 
 ```html
-
-<!-- jsDelivr CDN -->
 <script type="module">
   import { NostrFramework } from 'https://cdn.jsdelivr.net/npm/@johappel/nostr-framework/framework/index.js';
+  
+  const nostr = new NostrFramework();
+  await nostr.initialize();
+  
+  const identity = await nostr.authenticate('nip07');
+  console.log('Hello Nostr!', identity.displayName);
 </script>
+```
 
-<!-- UNPKG CDN -->
+### Alternative CDNs
+
+```html
+<!-- unpkg -->
 <script type="module">
   import { NostrFramework } from 'https://unpkg.com/@johappel/nostr-framework/framework/index.js';
 </script>
+
+<!-- skypack -->
+<script type="module">
+  import { NostrFramework } from 'https://cdn.skypack.dev/@johappel/nostr-framework/framework/index.js';
+</script>
 ```
 
-#### Vorteile
-- Kein Build-Prozess erforderlich
-- Sofort einsatzbereit
-- Ideal für CodePen, JSFiddle oder ähnliche Plattformen
+### CDN with Configuration
 
-#### Nachteile
-- Nicht für Produktionsanwendungen geeignet
-- Keine automatischen Updates
-- Größere Bundle-Größe
+```html
+<script>
+  // Configure before importing
+  window.NostrConfig = {
+    relays: ['wss://relay.damus.io', 'wss://nos.lol'],
+    metadataCacheDuration: 1800000 // 30 minutes
+  };
+</script>
 
-### Methode 3: Lokale Entwicklung (für Framework-Entwickler)
+<script type="module">
+  import { NostrFramework } from 'https://cdn.jsdelivr.net/npm/@johappel/nostr-framework/framework/index.js';
+  
+  const nostr = new NostrFramework();
+  await nostr.initialize();
+</script>
+```
 
-Wenn Sie am Framework selbst entwickeln oder die neueste Entwicklungsversion verwenden möchten.
+## Development Setup
+
+### Clone Repository
 
 ```bash
-# Klonen des Repository
-git clone https://github.com/nostr/framework.git
-cd framework
+git clone https://github.com/johappel/nostr-client.git
+cd nostr-client
+```
 
-# Abhängigkeiten installieren
+### Install Dependencies
+
+```bash
 npm install
-
-# Framework bauen
-npm run build
-
-# Lokales Paket erstellen
-npm pack
 ```
 
-#### Verwendung des lokalen Pakets
+This will install:
+- `nostr-tools` (v2.8.1) - For NIP-19 encoding/decoding and other Nostr utilities
+
+### Development Server
+
+Use VS Code Live Server or any other local web server:
 
 ```bash
-# In Ihrem Projektverzeichnis
-npm install /pfad/zum/framework/nostr-framework-x.x.x.tgz
+# VS Code: Right-click on HTML file → "Open with Live Server"
+# Or use another server, e.g.:
+npx serve .
+# Or Python 3:
+python -m http.server 8000
 ```
 
-#### Vorteile
-- Zugriff auf die neuesten Funktionen
-- Möglichkeit, am Framework mitzuwirken
-- Volle Kontrolle über den Build-Prozess
+## Configuration
 
-#### Nachteile
-- Erfordert manuelle Updates
-- Potenziell instabile Entwicklungsversionen
+### Default Configuration (v1.1.0)
 
-## Projekt-Setup
+The framework comes with optimized defaults:
 
-### Browser-Anwendung
+```javascript
+const defaultConfig = {
+  relays: [
+    'wss://relay.damus.io',
+    'wss://relay.snort.social',
+    'wss://nostr.wine',
+    'wss://nos.lol',
+    'wss://relay.nostr.band'
+  ],
+  nostrToolsBaseUrl: 'https://cdn.jsdelivr.net/npm/nostr-tools@2.8.1',
+  metadataCacheDuration: 3600000, // 1 hour
+  connectionTimeout: 10000,        // 10 seconds
+  maxRetries: 3                    // Connection retries
+};
+```
 
-#### 1. Grundlegende HTML-Struktur
+### Custom Configuration
+
+You can override defaults by passing options:
+
+```javascript
+const nostr = new NostrFramework({
+    relays: ['wss://my-relay.com'],
+    metadataCacheDuration: 1800000, // 30 minutes
+    connectionTimeout: 15000        // 15 seconds
+});
+```
+
+### Global Configuration
+
+For global configuration, define before importing:
+
+```javascript
+window.NostrConfig = {
+  relays: [
+    'wss://relay.damus.io',
+    'wss://relay.snort.social',
+    'wss://nos.lol'
+  ],
+  nostrToolsBaseUrl: 'https://cdn.example.com/nostr-tools@2.8.1',
+  metadataCacheDuration: 1800000
+};
+
+import { NostrFramework } from '@johappel/nostr-framework';
+```
+
+### Configuration File
+
+Create a `config.example.html` file for your project:
+
+```html
+<script>
+  window.NostrConfig = {
+    relays: [
+      'wss://relay.damus.io',
+      'wss://relay.snort.social',
+      'wss://nos.lol'
+    ],
+    metadataCacheDuration: 1800000,
+    nostrToolsBaseUrl: 'https://cdn.jsdelivr.net/npm/nostr-tools@2.8.1'
+  };
+</script>
+```
+
+## Testing
+
+### Live Tests (Browser)
+
+Open these test files directly in your browser:
+
+- **NIP-07 Tests**: [test-nip07.html](../../test-nip07.html)
+- **NIP-46 Tests**: [test-nip46.html](../../test-nip46.html)
+- **NSEC Tests**: [test-nsec.html](../../test-nsec.html)
+- **Relay Tests**: [test-relay.html](../../test-relay.html)
+- **Storage Tests**: [test-storage.html](../../test-storage.html)
+
+### Automated Testing
+
+```javascript
+// In browser console
+import { runEventBusTests } from './framework/core/EventBus.test.js';
+import { runIdentityManagerTests } from './framework/core/IdentityManager.test.js';
+
+const results1 = runEventBusTests();
+const results2 = await runIdentityManagerTests();
+
+console.table(results1.tests);
+console.table(results2.tests);
+```
+
+### Test Key Generation (⚠️ Unsafe)
+
+```javascript
+import { NsecPlugin } from '@johappel/nostr-framework/plugins/auth/NsecPlugin.js';
+
+// Generate test keys (FOR TESTING ONLY!)
+const testKey = await NsecPlugin.generateTestKey();
+console.log('Test nsec:', testKey.nsec);
+console.log('Test npub:', testKey.npub);
+```
+
+## Browser Support
+
+The framework supports all modern browsers that support:
+- ES6 Modules
+- Async/await
+- WebSocket API
+- localStorage
+- Crypto API
+
+### Supported Browsers
+
+- ✅ Chrome 61+
+- ✅ Firefox 60+
+- ✅ Safari 10.1+
+- ✅ Edge 16+
+
+### Required Browser Features
+
+- **ES6 Modules**: For module imports
+- **WebSocket API**: For relay connections
+- **Crypto API**: For encryption operations
+- **localStorage**: For session persistence
+- **Async/await**: For asynchronous operations
+
+## Troubleshooting
+
+### Common Issues
+
+#### Module Import Errors
+
+Ensure you're using ES6 modules:
+
+```html
+<script type="module">
+  // Your code here
+</script>
+```
+
+#### CORS Issues
+
+When using CDN, make sure your server serves files with proper CORS headers.
+
+#### WebSocket Connection Issues
+
+Some relays might be temporarily unavailable. The framework will automatically try alternative relays.
+
+#### NIP-07 Extension Not Detected
+
+Make sure you have a NIP-07 extension installed:
+- [Alby](https://getalby.com)
+- [nos2x](https://github.com/fiatjaf/nos2x)
+- [Flamingo](https://www.flamingo.me)
+
+#### Metadata Not Loading
+
+Check if relays are accessible and if the user has a kind 0 event:
+
+```javascript
+// Enable debug mode
+const nostr = new NostrFramework();
+nostr.setDebugMode(true);
+
+// Check metadata manually
+const identity = await nostr.authenticate('nip07');
+console.log('Metadata:', identity.metadata);
+```
+
+### Debug Mode
+
+Enable debug mode for detailed logging:
+
+```javascript
+const nostr = new NostrFramework();
+nostr.setDebugMode(true);
+
+// Or enable globally
+window.NostrConfig = { debug: true };
+```
+
+### Version Compatibility
+
+- **v1.1.0**: Current stable version with metadata support
+- **v1.0.x**: Legacy versions without metadata fetching
+
+## Project Setup Examples
+
+### Basic HTML Application
 
 ```html
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meine Nostr-Anwendung</title>
+    <title>Nostr Framework Demo</title>
 </head>
 <body>
     <div id="app">
-        <h1>Nostr Framework Demo</h1>
+        <h1>Nostr Framework v1.1.0</h1>
+        <button id="loginBtn">Login with NIP-07</button>
         <div id="output"></div>
     </div>
     
     <script type="module">
-        import { NostrFramework, LocalStoragePlugin } from '@johappel/nostr-framework';
+        import { NostrFramework } from 'https://cdn.jsdelivr.net/npm/@johappel/nostr-framework/framework/index.js';
         
-        // Ihr Code hier
+        const nostr = new NostrFramework();
+        await nostr.initialize();
+        
+        document.getElementById('loginBtn').onclick = async () => {
+            try {
+                const identity = await nostr.authenticate('nip07');
+                document.getElementById('output').innerHTML = `
+                    <h3>Logged in as: ${identity.displayName || identity.npub}</h3>
+                    <p>Provider: ${identity.provider}</p>
+                    <p>Metadata: ${JSON.stringify(identity.metadata, null, 2)}</p>
+                `;
+            } catch (error) {
+                console.error('Login failed:', error);
+            }
+        };
     </script>
 </body>
 </html>
 ```
 
-#### 2. Mit Build-Tools (Vite)
+### Vite Project
 
 ```bash
-# Neues Projekt erstellen
+# Create new project
 npm create vite@latest my-nostr-app -- --template vanilla
 cd my-nostr-app
 
-# Abhängigkeiten installieren
+# Install dependencies
 npm install
 
-# Nostr Framework hinzufügen
+# Add Nostr Framework
 npm install @johappel/nostr-framework
 ```
 
 ```javascript
 // main.js
-import { NostrFramework, LocalStoragePlugin } from '@johappel/nostr-framework';
-
-const nostr = new NostrFramework({
-    relays: ['wss://relay.damus.io'],
-    storage: new LocalStoragePlugin()
-});
-
-await nostr.initialize();
-```
-
-### Node.js-Anwendung
-
-#### 1. Projekt einrichten
-
-```bash
-# Neues Projekt erstellen
-mkdir my-nostr-server
-cd my-nostr-server
-npm init -y
-
-# Abhängigkeiten installieren
-npm install @johappel/nostr-framework
-npm install --save-dev @types/node
-```
-
-#### 2. Polyfills für Node.js
-
-```javascript
-// server.js
-import { WebSocket } from 'ws';
-import { fetch } from 'node-fetch';
-
-// Polyfills für Node.js-Umgebung
-global.WebSocket = WebSocket;
-global.fetch = fetch;
-
 import { NostrFramework } from '@johappel/nostr-framework';
 
-const nostr = new NostrFramework({
-    relays: ['wss://relay.damus.io']
-});
-
+const nostr = new NostrFramework();
 await nostr.initialize();
+
+// Test different auth methods
+console.log('Testing NIP-07...');
+try {
+    const identity1 = await nostr.authenticate('nip07');
+    console.log('NIP-07 Success:', identity1.displayName);
+} catch (error) {
+    console.log('NIP-07 failed:', error.message);
+}
+
+// Test NSEC (unsafe, for testing only)
+try {
+    const { NsecPlugin } = await import('@johappel/nostr-framework/plugins/auth/NsecPlugin.js');
+    const testKey = await NsecPlugin.generateTestKey();
+    const identity2 = await nostr.authenticate('nsec', { nsec: testKey.nsec });
+    console.log('NSEC Test Success:', identity2.displayName);
+} catch (error) {
+    console.log('NSEC test failed:', error.message);
+}
 ```
 
-### React-Anwendung
-
-#### 1. Projekt erstellen
+### React Application
 
 ```bash
-# Neues React-Projekt
+# Create React app
 npx create-react-app my-nostr-react-app
 cd my-nostr-react-app
 
-# Nostr Framework installieren
-npm install @nostr/framework
+# Install Nostr Framework
+npm install @johappel/nostr-framework
 ```
-
-#### 2. Hook für Nostr
 
 ```javascript
 // hooks/useNostr.js
 import { useState, useEffect } from 'react';
-import { NostrFramework, LocalStoragePlugin } from '@nostr/framework';
+import { NostrFramework } from '@johappel/nostr-framework';
 
 export function useNostr() {
     const [nostr, setNostr] = useState(null);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [identity, setIdentity] = useState(null);
     
     useEffect(() => {
         const initNostr = async () => {
-            const nostrInstance = new NostrFramework({
-                relays: ['wss://relay.damus.io'],
-                storage: new LocalStoragePlugin()
-            });
-            
+            const nostrInstance = new NostrFramework();
             await nostrInstance.initialize();
             setNostr(nostrInstance);
             setIsInitialized(true);
@@ -231,266 +435,97 @@ export function useNostr() {
         initNostr();
     }, []);
     
-    return { nostr, isInitialized };
+    const login = async (provider = 'nip07', credentials = {}) => {
+        if (!nostr) return;
+        try {
+            const identity = await nostr.authenticate(provider, credentials);
+            setIdentity(identity);
+            return identity;
+        } catch (error) {
+            console.error('Login failed:', error);
+            throw error;
+        }
+    };
+    
+    const logout = async () => {
+        if (!nostr) return;
+        try {
+            await nostr.logout();
+            setIdentity(null);
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
+    };
+    
+    return { nostr, isInitialized, identity, login, logout };
 }
 ```
 
-#### 3. Verwendung in Komponenten
-
 ```javascript
-// components/NostrComponent.js
+// components/NostrAuth.js
 import { useNostr } from '../hooks/useNostr';
 
-function NostrComponent() {
-    const { nostr, isInitialized } = useNostr();
+function NostrAuth() {
+    const { nostr, isInitialized, identity, login, logout } = useNostr();
     
     if (!isInitialized) {
-        return <div>Lade...</div>;
+        return <div>Initializing Nostr Framework...</div>;
     }
-    
-    const publishNote = async () => {
-        // Ihre Logik hier
-    };
     
     return (
         <div>
-            <button onClick={publishNote}>Note veröffentlichen</button>
+            {identity ? (
+                <div>
+                    <h3>Logged in as: {identity.displayName || identity.npub}</h3>
+                    <p>Provider: {identity.provider}</p>
+                    <button onClick={logout}>Logout</button>
+                </div>
+            ) : (
+                <div>
+                    <button onClick={() => login('nip07')}>
+                        Login with NIP-07 Extension
+                    </button>
+                    <button onClick={() => {
+                        // Generate test key (unsafe)
+                        import('@johappel/nostr-framework/plugins/auth/NsecPlugin.js').then(({ NsecPlugin }) => {
+                            NsecPlugin.generateTestKey().then(testKey => {
+                                login('nsec', { nsec: testKey.nsec });
+                            });
+                        });
+                    }}>
+                        Login with Test Key (⚠️ Unsafe)
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
+
+export default NostrAuth;
 ```
 
-### Vue-Anwendung
+## Next Steps
 
-#### 1. Projekt erstellen
+After installation, check out these guides:
 
-```bash
-# Neues Vue-Projekt
-npm create vue@latest my-nostr-vue-app
-cd my-nostr-vue-app
-npm install
+- [Quick Start](quick-start.md)
+- [Configuration](config.md)
+- [API Reference](../api/README.md)
+- [Auth Plugins](../api/plugins/AuthPlugin.md)
 
-# Nostr Framework installieren
-npm install @nostr/framework
-```
+## Package Information
 
-#### 2. Plugin für Vue
+- **Package**: `@johappel/nostr-framework`
+- **Version**: 1.1.1
+- **License**: MIT
+- **Repository**: https://github.com/johappel/nostr-client
+- **CDN**: https://cdn.jsdelivr.net/npm/@johappel/nostr-framework/framework/index.js
 
-```javascript
-// plugins/nostr.js
-import { NostrFramework, LocalStoragePlugin } from '@nostr/framework';
+## Support
 
-export default {
-    install: async (app) => {
-        const nostr = new NostrFramework({
-            relays: ['wss://relay.damus.io'],
-            storage: new LocalStoragePlugin()
-        });
-        
-        await nostr.initialize();
-        
-        app.config.globalProperties.$nostr = nostr;
-        app.provide('nostr', nostr);
-    }
-};
-```
+For installation issues:
 
-#### 3. Verwendung in Komponenten
-
-```javascript
-// components/NostrComponent.vue
-<template>
-    <div>
-        <button @click="publishNote">Note veröffentlichen</button>
-    </div>
-</template>
-
-<script>
-import { inject } from 'vue';
-
-export default {
-    name: 'NostrComponent',
-    setup() {
-        const nostr = inject('nostr');
-        
-        const publishNote = async () => {
-            // Ihre Logik hier
-        };
-        
-        return { publishNote };
-    }
-};
-</script>
-```
-
-## Konfiguration
-
-### Grundlegende Konfiguration
-
-```javascript
-const nostr = new NostrFramework({
-    // Relay-Liste
-    relays: [
-        'wss://relay.damus.io',
-        'wss://nos.lol',
-        'wss://relay.snort.social'
-    ],
-    
-    // Storage-Plugin
-    storage: new LocalStoragePlugin(),
-    
-    // Debug-Modus
-    debug: process.env.NODE_ENV === 'development',
-    
-    // Zeitüberschreitungen
-    timeouts: {
-        connect: 5000,
-        publish: 10000,
-        fetch: 15000
-    },
-    
-    // Wiederholungsversuche
-    retryAttempts: 3,
-    
-    // Automatische Synchronisation
-    autoSync: true,
-    
-    // Cache-Konfiguration
-    cache: {
-        enabled: true,
-        maxSize: 1000,
-        ttl: 300000 // 5 Minuten
-    }
-});
-```
-
-### Umgebungsvariablen
-
-```bash
-# .env
-VITE_NOSTR_RELAYS=wss://relay.damus.io,wss://nos.lol
-VITE_NOSTR_DEBUG=true
-VITE_NOSTR_STORAGE_TYPE=local
-```
-
-```javascript
-// Verwendung in Ihrer Anwendung
-const nostr = new NostrFramework({
-    relays: import.meta.env.VITE_NOSTR_RELAYS.split(','),
-    debug: import.meta.env.VITE_NOSTR_DEBUG === 'true'
-});
-```
-
-## Fehlerbehebung
-
-### Häufige Installationsprobleme
-
-#### 1. Modul nicht gefunden
-
-**Problem:** `Cannot resolve '@johappel/nostr-framework'`
-
-**Lösung:**
-```bash
-# Überprüfen Sie die Installation
-npm list @johappel/nostr-framework
-
-# Neu installieren
-npm uninstall @johappel/nostr-framework
-npm install @johappel/nostr-framework
-```
-
-#### 2. TypeScript-Fehler
-
-**Problem:** `Cannot find module '@johappel/nostr-framework' or its corresponding type declarations.`
-
-**Lösung:**
-```bash
-# TypeScript-Typen installieren
-npm install --save-dev @types/node
-
-# tsconfig.json überprüfen
-{
-    "compilerOptions": {
-        "moduleResolution": "node",
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true
-    }
-}
-```
-
-#### 3. CORS-Fehler im Browser
-
-**Problem:** `Access to fetch at 'wss://relay.damus.io' has been blocked by CORS policy.`
-
-**Lösung:**
-```javascript
-// Stellen Sie sicher, dass Sie über HTTPS oder localhost arbeiten
-// Für die Entwicklung können Sie ein lokales Zertifikat verwenden
-npm install --save-dev mkcert
-mkcert create-ca
-mkcert create-cert
-```
-
-#### 4. WebSocket-Verbindungsprobleme
-
-**Problem:** `WebSocket connection to 'wss://relay.damus.io' failed`
-
-**Lösung:**
-```javascript
-// Verbindungs-Timeout erhöhen
-const nostr = new NostrFramework({
-    relays: ['wss://relay.damus.io'],
-    timeouts: {
-        connect: 10000 // 10 Sekunden
-    }
-});
-
-// Alternative Relays versuchen
-const nostr = new NostrFramework({
-    relays: [
-        'wss://relay.damus.io',
-        'wss://nos.lol',
-        'wss://relay.snort.social'
-    ]
-});
-```
-
-### Entwicklertools
-
-#### Debug-Modus aktivieren
-
-```javascript
-const nostr = new NostrFramework({
-    debug: true // Aktiviert detaillierte Logs
-});
-```
-
-#### Event-Listener für Fehler
-
-```javascript
-nostr.on('error', (error) => {
-    console.error('Framework-Fehler:', error);
-});
-
-nostr.on('relay:error', (relay, error) => {
-    console.error(`Relay-Fehler (${relay.url}):`, error);
-});
-```
-
-## Nächste Schritte
-
-Nach der erfolgreichen Installation können Sie:
-
-1. [Getting Started Tutorial](./getting-started.md) - Grundlegende Konzepte lernen
-2. [Quick Start Tutorial](./quick-start.md) - Schnelle Demo-Anwendung erstellen
-3. [API-Referenz](../api/) - Alle Funktionen erkunden
-4. [Beispiele](../examples/) - Praktische Anwendungen ansehen
-
-## Unterstützung
-
-Bei Problemen mit der Installation:
-
-1. Überprüfen Sie die [FAQ](../faq.md)
-2. Suchen Sie nach [bestehenden Issues](https://github.com/nostr/framework/issues)
-3. Erstellen Sie ein [neues Issue](https://github.com/nostr/framework/issues/new)
-4. Treten Sie der [Community-Diskussion](https://github.com/nostr/framework/discussions) bei
+1. Check the [FAQ](../faq.md)
+2. Search [existing issues](https://github.com/johappel/nostr-client/issues)
+3. Create a [new issue](https://github.com/johappel/nostr-client/issues/new)
+4. Join the [community discussion](https://github.com/johappel/nostr-client/discussions)
