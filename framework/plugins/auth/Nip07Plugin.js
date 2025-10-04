@@ -2,6 +2,7 @@
 
 import { AuthPlugin } from './AuthPlugin.js';
 import { npubEncode } from 'nostr-tools/nip19';
+import { Config } from '../../config.js';
 
 /**
  * NIP-07 Authentication Plugin
@@ -248,14 +249,102 @@ export class Nip07Plugin extends AuthPlugin {
       canDecrypt: !!(window.nostr?.nip04?.decrypt || window.nostr?.nip44?.decrypt)
     };
 
+    // Fetch metadata
+    let displayName = null;
+    let metadata = null;
+    
+    try {
+      const meta = await this._fetchMetadata(pubkey, npub);
+      if (meta) {
+        metadata = meta;
+        displayName = meta.name || meta.display_name || meta.displayName || null;
+      }
+    } catch (error) {
+      console.warn('[NIP-07] Failed to fetch metadata:', error);
+    }
+
     return {
       pubkey,
       npub,
       provider: 'nip07',
-      displayName: null, // Could be fetched from kind 0 metadata
-      metadata: null,
+      displayName,
+      metadata,
       capabilities
     };
+  }
+
+  /**
+   * Fetch user metadata (kind 0) from relays
+   * @private
+   * @param {string} pubkey - Hex public key
+   * @param {string} npub - Bech32 npub
+   * @returns {Promise<Object|null>}
+   */
+  async _fetchMetadata(pubkey, npub) {
+    try {
+      // Check cache first
+      try {
+        const cached = localStorage.getItem('author_meta:' + npub);
+        if (cached) {
+          const meta = JSON.parse(cached);
+          // Cache is valid for configured duration (default: 1 hour)
+          if (meta._cached_at && (Date.now() - meta._cached_at) < Config.metadataCacheDuration) {
+            console.log('[NIP-07] Using cached metadata for', npub);
+            return meta;
+          }
+        }
+      } catch (e) {
+        console.debug('[NIP-07] Cache check failed:', e);
+      }
+
+      // Use configured relays
+      const relays = [...Config.relays];
+
+      // Add instance-specific config relays if available
+      if (this.config.relays && Array.isArray(this.config.relays)) {
+        relays.push(...this.config.relays);
+      }
+
+      console.log('[NIP-07] Fetching metadata from relays for', npub);
+
+      // Load nostr-tools for querying (using configured base URL)
+      const { SimplePool } = await import(`${Config.nostrToolsBaseUrl}/pool`);
+      const pool = new SimplePool();
+
+      // Query for kind 0 event
+      const filter = {
+        kinds: [0],
+        authors: [pubkey],
+        limit: 1
+      };
+
+      const events = await pool.querySync(relays, filter);
+      pool.close(relays);
+
+      if (events && events.length > 0) {
+        const event = events[0];
+        let meta = null;
+        try {
+          meta = JSON.parse(event.content);
+          // Cache with timestamp
+          meta._cached_at = Date.now();
+          try {
+            localStorage.setItem('author_meta:' + npub, JSON.stringify(meta));
+          } catch (e) {
+            console.debug('[NIP-07] Failed to cache metadata:', e);
+          }
+        } catch (e) {
+          console.warn('[NIP-07] JSON parse for metadata failed:', e);
+        }
+        return meta;
+      } else {
+        console.warn('[NIP-07] No profile event found for', npub);
+        return null;
+      }
+    } catch (error) {
+      console.error('[NIP-07] Error fetching metadata:', error);
+      return null;
+    }
   }
 
   /**

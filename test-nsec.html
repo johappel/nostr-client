@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NIP-07 Plugin Test</title>
+  <title>⚠️ NSEC Plugin Test (UNSAFE)</title>
   
   <!-- Import Map for nostr-tools via CDN -->
   <script type="importmap">
     {
       "imports": {
         "nostr-tools/nip19": "https://esm.sh/nostr-tools@2.17.0/nip19",
+        "nostr-tools": "https://esm.sh/nostr-tools@2.17.0",
         "@noble/hashes/utils": "https://esm.sh/@noble/hashes@1.3.1/utils",
         "@scure/base": "https://esm.sh/@scure/base@1.1.1"
       }
@@ -24,8 +25,8 @@
       background: #f5f5f5;
     }
     h1 {
-      color: #333;
-      border-bottom: 3px solid #9C27B0;
+      color: #dc3545;
+      border-bottom: 3px solid #dc3545;
       padding-bottom: 10px;
     }
     .container {
@@ -36,14 +37,13 @@
       margin-bottom: 20px;
     }
     .warning {
-      background: #FFF3CD;
-      border-left: 4px solid #FFC107;
+      background: #dc3545;
+      color: white;
+      border-left: 4px solid #a71d2a;
       padding: 15px;
       margin: 15px 0;
       border-radius: 4px;
-    }
-    .warning strong {
-      color: #856404;
+      font-weight: bold;
     }
     .info {
       background: #D1ECF1;
@@ -67,7 +67,7 @@
       border-radius: 4px;
     }
     button {
-      background: #9C27B0;
+      background: #dc3545;
       color: white;
       border: none;
       padding: 12px 24px;
@@ -77,26 +77,28 @@
       margin: 5px;
     }
     button:hover {
-      background: #7B1FA2;
+      background: #c82333;
     }
     button:disabled {
       background: #ccc;
       cursor: not-allowed;
     }
     button.secondary {
-      background: #2196F3;
+      background: #6c757d;
     }
     button.secondary:hover {
-      background: #0b7dda;
+      background: #5a6268;
     }
-    button.danger {
-      background: #DC3545;
-    }
-    button.danger:hover {
-      background: #c82333;
+    input[type="password"], input[type="text"] {
+      width: calc(100% - 20px);
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: monospace;
+      margin: 10px 0;
     }
     .identity-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%);
       color: white;
       padding: 20px;
       border-radius: 8px;
@@ -115,14 +117,6 @@
       font-size: 11px;
       text-transform: uppercase;
     }
-    .extension-info {
-      background: #f8f9fa;
-      padding: 15px;
-      border-radius: 4px;
-      margin: 10px 0;
-      font-family: monospace;
-      font-size: 12px;
-    }
     .console {
       background: #1e1e1e;
       color: #d4d4d4;
@@ -136,57 +130,90 @@
       word-wrap: break-word;
       margin-top: 10px;
     }
-    .console .log { color: #d4d4d4; }
-    .console .info { color: #4FC3F7; }
     .console .warn { color: #FFB74D; }
     .console .error { color: #EF5350; }
     .console .success { color: #81C784; }
+    .security-box {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .security-box h3 {
+      color: #856404;
+      margin-top: 0;
+    }
+    .security-box ul {
+      color: #856404;
+    }
   </style>
 </head>
 <body>
-  <h1>🔌 NIP-07 Plugin Test</h1>
+  <h1>⚠️ NSEC Plugin Test (UNSAFE!)</h1>
+
+  <div class="warning">
+    <strong>🛑 SICHERHEITSWARNUNG 🛑</strong><br>
+    Diese Authentifizierungsmethode ist UNSICHER und sollte NUR verwendet werden für:
+    <ul style="margin: 10px 0;">
+      <li>Testing und Entwicklung</li>
+      <li>Wegwerf-Accounts</li>
+      <li>Lernzwecke</li>
+    </ul>
+    <strong>NIEMALS mit Ihrem Haupt-Nostr-Account verwenden!</strong>
+  </div>
+
+  <div class="security-box">
+    <h3>🔒 Warum ist das unsicher?</h3>
+    <ul>
+      <li>Privater Schlüssel wird im Browser-Speicher gehalten</li>
+      <li>Optional in localStorage gespeichert</li>
+      <li>Sichtbar für Browser-Extensions</li>
+      <li>Anfällig für XSS-Angriffe</li>
+    </ul>
+    <h3>✅ Empfohlene Alternativen:</h3>
+    <ul>
+      <li><strong>NIP-07:</strong> Browser Extensions (Alby, nos2x, Flamingo)</li>
+      <li><strong>NIP-46:</strong> Remote Signing (Bunker)</li>
+    </ul>
+  </div>
 
   <div class="container">
-    <div class="warning">
-      <strong>⚠️ Voraussetzung:</strong> Diese Seite benötigt eine NIP-07-kompatible Browser-Extension wie:
-      <ul>
-        <li><a href="https://getalby.com" target="_blank" rel="noopener">Alby</a> (empfohlen)</li>
-        <li><a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noopener">nos2x</a></li>
-        <li><a href="https://www.flamingo.me" target="_blank" rel="noopener">Flamingo</a></li>
-      </ul>
+    <h2>Test-Schlüssel generieren</h2>
+    <div class="info">
+      <strong>Für Testzwecke:</strong> Generieren Sie einen neuen Wegwerf-Schlüssel:
     </div>
-
-    <div id="extension-status"></div>
+    
+    <button class="secondary" onclick="generateTestKey()">🔑 Test-Schlüssel generieren</button>
+    <div id="generate-result"></div>
   </div>
 
   <div class="container">
-    <h2>1. Extension-Erkennung</h2>
-    <button onclick="checkExtension()">🔍 Extension prüfen</button>
-    <div id="extension-info"></div>
-  </div>
-
-  <div class="container">
-    <h2>2. Login/Logout</h2>
-    <button id="login-btn" onclick="login()">🔓 Mit Extension verbinden</button>
-    <button id="logout-btn" onclick="logout()" disabled>🔒 Logout</button>
+    <h2>Login</h2>
+    <div class="info">
+      Geben Sie Ihren privaten Schlüssel ein (nsec1... oder hex Format):
+    </div>
+    
+    <label for="nsec-input">Private Key:</label>
+    <input type="password" id="nsec-input" placeholder="nsec1... oder hex (64 Zeichen)">
+    
+    <div>
+      <button id="login-btn" onclick="login()">⚠️ Login (UNSAFE)</button>
+      <button id="logout-btn" onclick="logout()" disabled>Logout</button>
+    </div>
+    
     <div id="identity-display"></div>
   </div>
 
   <div class="container">
-    <h2>3. Event signieren</h2>
+    <h2>Test: Event signieren</h2>
     <button id="sign-btn" onclick="signTestEvent()" disabled>✍️ Test-Event signieren</button>
     <div id="sign-result"></div>
   </div>
 
   <div class="container">
-    <h2>4. NIP-04 Verschlüsselung</h2>
-    <div class="info" style="font-size: 13px;">
-      <strong>ℹ️ Hinweis zu nos2x-fox:</strong>
-      nos2x-fox erfordert explizite Permissions für NIP-04 Encrypt/Decrypt.
-      Wenn du "Insufficient permissions, required 20" siehst, musst du in den Extension-Einstellungen
-      die Berechtigung für diese Seite erteilen. Alternativ: Teste mit Alby Extension.
-    </div>
-    <input type="text" id="encrypt-text" placeholder="Text to encrypt" style="width: 60%; padding: 8px; margin-right: 5px;">
+    <h2>Test: NIP-04 Verschlüsselung</h2>
+    <input type="text" id="encrypt-text" placeholder="Text to encrypt" style="width: 60%; margin-right: 5px;">
     <button id="encrypt-btn" onclick="testEncryption()" disabled>🔐 Verschlüsseln</button>
     <div id="encryption-result"></div>
   </div>
@@ -199,7 +226,7 @@
 
   <script type="module">
     import { IdentityManager } from './framework/core/IdentityManager.js';
-    import { Nip07Plugin } from './framework/plugins/auth/Nip07Plugin.js';
+    import { NsecPlugin } from './framework/plugins/auth/NsecPlugin.js';
 
     // Global state
     let manager = null;
@@ -217,72 +244,104 @@
       console.scrollTop = console.scrollHeight;
     }
 
-    // Wait for extension to load
-    async function waitForExtension(maxWaitMs = 3000) {
-      const startTime = Date.now();
-      while (Date.now() - startTime < maxWaitMs) {
-        if (window.nostr) {
-          return true;
-        }
-        await new Promise(resolve => setTimeout(resolve, 100));
+    // Generate test key
+    window.generateTestKey = async function() {
+      try {
+        log('🔑 Generiere Test-Schlüssel...', 'log');
+        
+        const keyPair = await NsecPlugin.generateTestKey();
+        
+        document.getElementById('generate-result').innerHTML = `
+          <div class="success" style="margin-top: 15px;">
+            <strong>✅ Test-Schlüssel generiert!</strong>
+            <div style="margin-top: 15px; font-family: monospace; font-size: 12px;">
+              <div style="margin: 10px 0;">
+                <strong>Public Key (npub):</strong><br>
+                <input type="text" readonly value="${keyPair.npub}"
+                       onclick="this.select()"
+                       style="width: 100%; cursor: pointer; background: #f8f9fa;">
+              </div>
+              <div style="margin: 10px 0;">
+                <strong>Private Key (nsec) ⚠️:</strong><br>
+                <input type="text" readonly value="${keyPair.nsec}"
+                       onclick="this.select()"
+                       style="width: 100%; cursor: pointer; background: #fff3cd;">
+              </div>
+              <div style="margin-top: 15px;">
+                <button class="secondary" onclick="useGeneratedKey('${keyPair.nsec}')">
+                  → Mit diesem Schlüssel einloggen
+                </button>
+                <button class="secondary" onclick="copyToClipboard('${keyPair.nsec}')">
+                  📋 nsec kopieren
+                </button>
+              </div>
+            </div>
+            <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 4px; font-size: 12px;">
+              <strong>⚠️ Wichtig:</strong> Dies ist ein Test-Schlüssel!<br>
+              - NUR für Testing verwenden<br>
+              - NICHT mit echten Sats verknüpfen<br>
+              - Kann von jedem mit Zugang zu dieser Seite gesehen werden
+            </div>
+          </div>
+        `;
+        
+        log('✅ Test-Schlüssel generiert', 'success');
+        log(`npub: ${keyPair.npub}`, 'log');
+        log('⚠️ WARNUNG: Nur für Testing verwenden!', 'warn');
+      } catch (error) {
+        log(`❌ Generierung fehlgeschlagen: ${error.message}`, 'error');
+        document.getElementById('generate-result').innerHTML = `
+          <div class="error">${error.message}</div>
+        `;
       }
-      return false;
-    }
+    };
+
+    // Use generated key
+    window.useGeneratedKey = function(nsec) {
+      document.getElementById('nsec-input').value = nsec;
+      log('✅ Generierter Schlüssel in Eingabefeld übernommen', 'success');
+      log('⚠️ Klicken Sie auf "Login" um fortzufahren', 'warn');
+    };
+
+    // Copy to clipboard
+    window.copyToClipboard = async function(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        log('✅ In Zwischenablage kopiert', 'success');
+      } catch (error) {
+        log('❌ Kopieren fehlgeschlagen - bitte manuell kopieren', 'error');
+      }
+    };
 
     // Initialize
     async function init() {
-      log('🚀 Initialisiere NIP-07 Plugin Test...', 'info');
+      log('⚠️ WARNUNG: Initialisiere UNSAFE NSEC Plugin...', 'warn');
+      log(NsecPlugin.showSecurityWarning(), 'warn');
       
-      // Wait for extension to load (max 3 seconds)
-      log('⏳ Warte auf Extension...', 'info');
-      const extensionLoaded = await waitForExtension();
-      
-      const statusDiv = document.getElementById('extension-status');
-      
-      if (!extensionLoaded) {
-        statusDiv.innerHTML = `
-          <div class="error">
-            <strong>❌ Keine NIP-07 Extension erkannt</strong>
-            <p>Bitte installiere eine NIP-07-kompatible Browser-Extension.</p>
-            <p><small>Wenn die Extension installiert ist, lade die Seite neu.</small></p>
-          </div>
-        `;
-        log('❌ Keine Extension gefunden (nach 3 Sekunden Wartezeit)', 'error');
-        return;
-      }
-
-      statusDiv.innerHTML = `
-        <div class="success">
-          <strong>✅ NIP-07 Extension erkannt!</strong>
-        </div>
-      `;
-      log('✅ Extension erkannt', 'success');
-
       // Initialize manager and plugin
       manager = new IdentityManager();
-      plugin = new Nip07Plugin();
+      plugin = new NsecPlugin({ rememberKey: true }); // Enable key persistence
       
       try {
         await plugin.initialize();
         log('✅ Plugin initialisiert', 'success');
       } catch (error) {
         log(`⚠️ Plugin-Initialisierung mit Warnung: ${error.message}`, 'warn');
-        // Continue anyway - extension might still work
       }
       
-      // Always register plugin and initialize manager
+      // Register plugin
       try {
-        manager.registerPlugin('nip07', plugin);
+        manager.registerPlugin('nsec', plugin);
         await manager.initialize();
         log('✅ Manager initialisiert und Plugin registriert', 'success');
 
-        // Check if already logged in and restore through manager
+        // Check if already logged in (session restored)
         if (await plugin.isLoggedIn()) {
           try {
-            const identity = await manager.authenticate('nip07');
+            const identity = await manager.authenticate('nsec');
             displayIdentity(identity);
             updateButtonStates(true);
-            log('✅ Session wiederhergestellt', 'success');
+            log('⚠️ Session wiederhergestellt (UNSAFE!)', 'warn');
           } catch (error) {
             log(`⚠️ Session-Wiederherstellung fehlgeschlagen: ${error.message}`, 'warn');
           }
@@ -292,41 +351,27 @@
       }
     }
 
-    // Check extension
-    window.checkExtension = function() {
-      const info = Nip07Plugin.getExtensionInfo();
-      const infoDiv = document.getElementById('extension-info');
-      
-      if (!info) {
-        infoDiv.innerHTML = '<div class="error">❌ Keine Extension verfügbar</div>';
-        return;
-      }
-
-      infoDiv.innerHTML = `
-        <div class="extension-info">
-          <strong>Extension Details:</strong><br>
-          Available: ${info.available ? '✅' : '❌'}<br>
-          NIP-04 Support: ${info.hasNip04 ? '✅' : '❌'}<br>
-          NIP-44 Support: ${info.hasNip44 ? '✅' : '❌'}<br>
-          Methods: ${info.methods.join(', ')}
-        </div>
-      `;
-      
-      log('🔍 Extension-Informationen abgerufen', 'info');
-    };
-
     // Login
     window.login = async function() {
       try {
-        log('🔄 Login wird durchgeführt...', 'info');
+        const nsec = document.getElementById('nsec-input').value;
+        if (!nsec) {
+          alert('Bitte privaten Schlüssel eingeben!');
+          return;
+        }
+
+        log('⚠️ Login wird durchgeführt (UNSAFE!)...', 'warn');
         document.getElementById('login-btn').disabled = true;
         
-        const identity = await manager.authenticate('nip07');
+        const identity = await manager.authenticate('nsec', { nsec });
         
         displayIdentity(identity);
         updateButtonStates(true);
         
-        log(`✅ Login erfolgreich: ${identity.npub}`, 'success');
+        // Clear input for security
+        document.getElementById('nsec-input').value = '';
+        
+        log(`⚠️ Login erfolgreich (UNSAFE!): ${identity.npub}`, 'warn');
       } catch (error) {
         log(`❌ Login fehlgeschlagen: ${error.message}`, 'error');
         document.getElementById('identity-display').innerHTML = `
@@ -340,14 +385,14 @@
     // Logout
     window.logout = async function() {
       try {
-        log('🔄 Logout wird durchgeführt...', 'info');
+        log('🔄 Logout wird durchgeführt...', 'log');
         
         await manager.logout();
         
         document.getElementById('identity-display').innerHTML = '';
         updateButtonStates(false);
         
-        log('✅ Logout erfolgreich', 'success');
+        log('✅ Logout erfolgreich - Privater Schlüssel gelöscht', 'success');
       } catch (error) {
         log(`❌ Logout fehlgeschlagen: ${error.message}`, 'error');
       }
@@ -356,7 +401,7 @@
     // Sign test event
     window.signTestEvent = async function() {
       try {
-        log('✍️ Signiere Test-Event...', 'info');
+        log('✍️ Signiere Test-Event lokal...', 'log');
         
         const signer = manager.getSigner();
         const pubkey = await signer.getPublicKey();
@@ -364,22 +409,19 @@
         const event = {
           kind: 1,
           created_at: Math.floor(Date.now() / 1000),
-          tags: [],
-          content: 'Hello from NIP-07 Plugin Test!',
+          tags: [['t', 'unsafe-nsec-test']],
+          content: 'Test message from UNSAFE NSEC Plugin!',
           pubkey: pubkey
         };
         
-        log(`Event vor Signierung: ${JSON.stringify(event, null, 2)}`, 'info');
+        log(`Event vor Signierung: ${JSON.stringify(event, null, 2)}`, 'log');
         
         const signed = await signer.signEvent(event);
         
         document.getElementById('sign-result').innerHTML = `
           <div class="success">
-            <strong>✅ Event erfolgreich signiert!</strong>
-            <div class="extension-info" style="margin-top: 10px;">
-              <strong>Signiertes Event:</strong><br>
-              ${JSON.stringify(signed, null, 2)}
-            </div>
+            <strong>✅ Event erfolgreich signiert (lokal)!</strong>
+            <pre style="margin-top: 10px; font-size: 11px;">${JSON.stringify(signed, null, 2)}</pre>
           </div>
         `;
         
@@ -401,7 +443,7 @@
           return;
         }
 
-        log('🔐 Verschlüssele Text...', 'info');
+        log('🔐 Verschlüssele Text lokal...', 'log');
         
         const signer = manager.getSigner();
         const pubkey = await signer.getPublicKey();
@@ -409,15 +451,15 @@
         // Encrypt to self for testing
         const encrypted = await signer.nip04Encrypt(pubkey, text);
         
-        log('🔓 Entschlüssele Text...', 'info');
+        log('🔓 Entschlüssele Text lokal...', 'log');
         const decrypted = await signer.nip04Decrypt(pubkey, encrypted);
         
         document.getElementById('encryption-result').innerHTML = `
           <div class="success">
-            <strong>✅ Verschlüsselung erfolgreich!</strong>
-            <div class="extension-info" style="margin-top: 10px;">
+            <strong>✅ Verschlüsselung erfolgreich (lokal)!</strong>
+            <div style="margin-top: 10px; font-size: 12px;">
               <strong>Original:</strong> ${text}<br>
-              <strong>Verschlüsselt:</strong> ${encrypted}<br>
+              <strong>Verschlüsselt:</strong> ${encrypted.substring(0, 50)}...<br>
               <strong>Entschlüsselt:</strong> ${decrypted}
             </div>
           </div>
@@ -442,12 +484,10 @@
         <div class="field">
           <div class="label">Metadata</div>
           <div style="font-size: 11px; opacity: 0.9;">
-            ${identity.metadata.name ? `Name: ${identity.metadata.name}<br>` : ''}
+            ${identity.metadata.name ? `Name: ${identity.metadata.name}<body>` : ''}
             ${identity.metadata.about ? `About: ${identity.metadata.about}<br>` : ''}
             ${identity.metadata.picture ? `Picture: ${identity.metadata.picture}<br>` : ''}
             ${identity.metadata.nip05 ? `NIP-05: ${identity.metadata.nip05}<br>` : ''}
-            ${identity.metadata.lud16 ? `Lightning: ${identity.metadata.lud16}<br>` : ''}
-            ${identity.metadata.website ? `Website: ${identity.metadata.website}<br>` : ''}
           </div>
         </div>
       ` : `
@@ -459,7 +499,7 @@
 
       document.getElementById('identity-display').innerHTML = `
         <div class="identity-card">
-          <h3>👤 Connected Identity</h3>
+          <h3>⚠️ Connected Identity (UNSAFE)</h3>
           <div class="field">
             <div class="label">Public Key (hex)</div>
             ${identity.pubkey}
@@ -470,13 +510,13 @@
           </div>
           <div class="field">
             <div class="label">Provider</div>
-            ${identity.provider}
+            ${identity.provider} - ⚠️ ${identity._warning || 'UNSAFE'}
           </div>
           ${metadataHtml}
           <div class="field">
             <div class="label">Capabilities</div>
-            Sign: ${identity.capabilities.canSign ? '✅' : '❌'} |
-            Encrypt: ${identity.capabilities.canEncrypt ? '✅' : '❌'} |
+            Sign: ${identity.capabilities.canSign ? '✅' : '❌'} | 
+            Encrypt: ${identity.capabilities.canEncrypt ? '✅' : '❌'} | 
             Decrypt: ${identity.capabilities.canDecrypt ? '✅' : '❌'}
           </div>
         </div>
@@ -497,10 +537,10 @@
     };
 
     // Export for console testing
-    window.testNip07 = { manager, plugin, log };
+    window.testNsec = { manager, plugin, log };
 
     // Auto-init
     init();
   </script>
 </body>
-</html>
+</div>

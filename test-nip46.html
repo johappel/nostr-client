@@ -569,12 +569,30 @@
                 elements.testPubkeyBtn.disabled = false;
                 elements.testCapabilitiesBtn.disabled = false;
                 
-                // Show identity details
+                // Show identity details with metadata
+                let metadataHtml = '';
+                if (identity.displayName) {
+                    metadataHtml += `<strong>Display Name:</strong> ${identity.displayName}<br>`;
+                }
+                if (identity.metadata) {
+                    metadataHtml += '<strong>Metadata:</strong><br>';
+                    if (identity.metadata.name) metadataHtml += `&nbsp;&nbsp;Name: ${identity.metadata.name}<br>`;
+                    if (identity.metadata.about) metadataHtml += `&nbsp;&nbsp;About: ${identity.metadata.about}<br>`;
+                    if (identity.metadata.picture) metadataHtml += `&nbsp;&nbsp;Picture: <a href="${identity.metadata.picture}" target="_blank">Link</a><br>`;
+                    if (identity.metadata.nip05) metadataHtml += `&nbsp;&nbsp;NIP-05: ${identity.metadata.nip05}<br>`;
+                    if (identity.metadata.lud16) metadataHtml += `&nbsp;&nbsp;Lightning: ${identity.metadata.lud16}<br>`;
+                    if (identity.metadata.website) metadataHtml += `&nbsp;&nbsp;Website: <a href="${identity.metadata.website}" target="_blank">${identity.metadata.website}</a><br>`;
+                } else {
+                    metadataHtml += '<em>Metadaten werden geladen...</em><br>';
+                }
+                
                 elements.identityDetails.innerHTML = `
                     <strong>Pubkey:</strong> ${identity.pubkey}<br>
                     <strong>Npub:</strong> ${identity.npub}<br>
                     <strong>Provider:</strong> ${identity.provider}<br>
-                    <strong>Capabilities:</strong> ${JSON.stringify(identity.capabilities, null, 2)}
+                    ${metadataHtml}
+                    <strong>Capabilities:</strong><br>
+                    <pre style="margin: 5px 0; font-size: 11px;">${JSON.stringify(identity.capabilities, null, 2)}</pre>
                 `;
             } else {
                 elements.connectionStatus.textContent = 'Nicht verbunden';

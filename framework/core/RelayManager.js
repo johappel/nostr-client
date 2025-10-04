@@ -1,6 +1,7 @@
 // framework/core/RelayManager.js
 
 import { EventBus } from './EventBus.js';
+import { Config } from '../config.js';
 
 /**
  * Manages relay connections and operations
@@ -46,7 +47,9 @@ export class RelayManager {
    * @private
    */
   async _loadNostrTools() {
+    // Use configured base URL, with fallbacks
     const cdnUrls = [
+      `${Config.nostrToolsBaseUrl}/pool`,
       'https://esm.sh/nostr-tools@2.8.1/pool',
       'https://cdn.jsdelivr.net/npm/nostr-tools@2.8.1/+esm',
       'https://unpkg.com/nostr-tools@2.8.1/+esm'
