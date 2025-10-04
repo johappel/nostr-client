@@ -45,10 +45,6 @@ const { NostrFramework, LocalStoragePlugin } = require('@johappel/nostr-framewor
 Die CDN-Methode ist ideal für schnelle Tests, Demos oder wenn Sie keinen Build-Prozess verwenden möchten.
 
 ```html
-<!-- JSR CDN -->
-<script type="module">
-  import { NostrFramework } from 'https://cdn.jsr.io/@johappel/nostr-framework/framework/index.js';
-</script>
 
 <!-- jsDelivr CDN -->
 <script type="module">

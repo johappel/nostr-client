@@ -1,6 +1,6 @@
 {
   "name": "@johappel/nostr-framework",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "Modular Nostr Client Framework",
   "type": "module",
   "main": "framework/index.js",
@@ -10,8 +10,14 @@
       "import": "./framework/index.js",
       "require": "./framework/index.js"
     },
+    "./config": {
+      "import": "./framework/config.js"
+    },
     "./plugins/*": {
       "import": "./framework/plugins/*/index.js"
+    },
+    "./plugins/auth/*": {
+      "import": "./framework/plugins/auth/*.js"
     },
     "./templates/*": {
       "import": "./framework/templates/*.js"
@@ -21,7 +27,8 @@
     "framework/",
     "docs/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "config.example.html"
   ],
   "scripts": {
     "dev": "npm run serve",

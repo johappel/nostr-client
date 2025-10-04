@@ -242,22 +242,20 @@ Das NIP-07 Plugin benötigt eine installierte Browser-Extension:
 
 ## 🗺️ Roadmap
 
-### ✅ Phase 1: Core Module (Abgeschlossen)
+### ✅ Core Module
 - [x] EventBus
 - [x] IdentityManager
-- [x] AuthPlugin Interface
-- [x] NIP-07 Plugin
-
-### ⏳ Phase 2: Weitere Module (In Planung)
 - [x] SignerManager
 - [x] TemplateEngine
 - [x] RelayManager
 - [x] EventManager
 - [x] StorageManager
 
-### 🔮 Phase 3: Weitere Auth-Plugins
+### 🔮 Auth-Plugins
+- [x] AuthPlugin Interface
 - [x] NIP-46 Plugin (Bunker)
-- [ ] Local Key Plugin (nsec)
+- [x] Local Key Plugin (nsec)
+- [x] NIP-07 Plugin
 - [ ] WordPress API Plugin
 
 ### 🔮 Phase 4: Dokumentation
@@ -267,13 +265,6 @@ Das NIP-07 Plugin benötigt eine installierte Browser-Extension:
 - [ ] Beispiele
 
 
-## 📚 Dokumentation
-
-Detaillierte Dokumentation für jedes Modul:
-
-- [EventBus Validierung](framework/core/EventBus.VALIDATION.md)
-- [IdentityManager Validierung](framework/core/IdentityManager.VALIDATION.md)
-- [Implementierungs-Roadmap](framework/AGENTS.md)
 
 ## 🐛 Debugging
 
