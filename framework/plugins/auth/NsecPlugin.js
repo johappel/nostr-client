@@ -65,7 +65,24 @@ export class NsecPlugin extends AuthPlugin {
    * @returns {Promise<Identity|null>}
    */
   async getIdentity() {
-    return this._currentIdentity;
+    // If we have a current identity, return it
+    if (this._currentIdentity) {
+      return this._currentIdentity;
+    }
+    
+    // If we have a private key but no identity, rebuild it
+    if (this._privateKey && !this._currentIdentity) {
+      try {
+        const pubkey = await this._getPublicKeyFromPrivate(this._privateKey);
+        this._currentIdentity = await this._buildIdentity(pubkey);
+        return this._currentIdentity;
+      } catch (error) {
+        console.error('[NSEC] Failed to rebuild identity from private key:', error);
+        return null;
+      }
+    }
+    
+    return null;
   }
 
   /**

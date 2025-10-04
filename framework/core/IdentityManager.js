@@ -123,7 +123,23 @@ export class IdentityManager {
     try {
       console.log(`[IdentityManager] Authenticating with ${providerName}...`);
       
-      const identity = await plugin.login(credentials);
+      let identity;
+      
+      // If credentials are provided, perform login
+      // Otherwise, try to get existing identity (for session restoration)
+      if (Object.keys(credentials).length > 0) {
+        identity = await plugin.login(credentials);
+      } else {
+        // For session restoration without credentials
+        if (await plugin.isLoggedIn()) {
+          identity = await plugin.getIdentity();
+          if (!identity) {
+            throw new Error(`Plugin "${providerName}" is logged in but no identity available`);
+          }
+        } else {
+          throw new Error(`Plugin "${providerName}" is not logged in and no credentials provided`);
+        }
+      }
       
       this._currentPlugin = plugin;
       this._currentIdentity = identity;
