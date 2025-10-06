@@ -1,17 +1,20 @@
 {
   "name": "@johappel/nostr-framework",
-  "version": "1.1.1",
+  "version": "1.1.6",
   "description": "Modular Nostr Client Framework",
   "type": "module",
-  "main": "framework/index.js",
-  "module": "framework/index.js",
+  "main": "framework/dist/index.js",
+  "module": "framework/dist/index.js",
+  "types": "framework/dist/types/index.d.ts",
   "exports": {
     ".": {
-      "import": "./framework/index.js",
-      "require": "./framework/index.js"
+      "import": "./framework/dist/index.js",
+      "require": "./framework/dist/index.js",
+      "types": "./framework/dist/types/index.d.ts"
     },
     "./config": {
-      "import": "./framework/config.js"
+      "import": "./framework/dist/config.js",
+      "types": "./framework/dist/types/config.d.ts"
     },
     "./plugins/*": {
       "import": "./framework/plugins/*/index.js"
@@ -34,8 +37,9 @@
     "dev": "npm run serve",
     "serve": "echo 'Please use VS Code Live Server or similar to serve files'",
     "test": "echo 'Open test-*.html files in browser to run tests'",
-    "prepublishOnly": "npm run test",
-    "build": "echo 'No build step required - ES modules ready'",
+    "build": "cd framework && npm run build",
+    "build:types": "cd framework && tsc",
+    "prepublishOnly": "npm run build:types",
     "publish-npm": "npm publish --access public"
   },
   "keywords": [
@@ -60,9 +64,14 @@
     "url": "https://github.com/johappel/nostr-client/issues"
   },
   "dependencies": {
-    "nostr-tools": "^2.8.1"
+    "react": "^19.2.0"
   },
-  "devDependencies": {},
+  "peerDependencies": {
+    "nostr-tools": "^2.17.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
   "engines": {
     "node": ">=18.0.0"
   }

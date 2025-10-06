@@ -1,0 +1,16 @@
+{
+  "name": "@johappel/nostr-framework-core",
+  "version": "1.1.6",
+  "description": "Core Nostr Framework with TypeScript support",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "clean": "if exist dist rmdir /s /q dist",
+    "prebuild": "npm run clean"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
