@@ -263,7 +263,8 @@ export class Nip07Plugin extends AuthPlugin {
    */
   private async _buildIdentity(pubkey: string): Promise<Identity> {
     // Import npubEncode dynamically to avoid issues in non-browser environments
-    const { npubEncode } = await import('nostr-tools/nip19');
+    const { nip19 } = await import('nostr-tools');
+    const npubEncode = nip19.npubEncode;
 
     // Convert to npub
     const npub = npubEncode(pubkey);

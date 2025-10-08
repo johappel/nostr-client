@@ -17,7 +17,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": false,
-    "declarationDir": "./dist/types"
+    "declarationDir": "./dist/types",
+    "jsx": "react-jsx"
   },
   "include": [
     "**/*.ts",
@@ -30,6 +31,8 @@
     "**/*.test.ts",
     "**/*example*",
     "**/*-example*",
-    "**/plugins/**/*.ts"
+    "react/hooks.ts",
+    "react/index.tsx", 
+    "nextjs/**"
   ]
 }

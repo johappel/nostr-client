@@ -33,3 +33,9 @@ build/
 # Temp
 tmp/
 temp/
+
+# Next.js
+.next/
+out/
+
+.hintrc
