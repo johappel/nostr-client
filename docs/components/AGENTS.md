@@ -23,18 +23,21 @@
 
 ```
 / (repo root)
-├─ app/                       # Next.js routes (demo app + example launchers)
-├─ components/
-│  └─ nostr-ui/               # Published UI components (shadcn-based)
-├─ core/                      # Framework-agnostic core (domain logic, schemas)
-├─ lib/
-│  ├─ nostr/                  # nostr-tools wrappers, pool, signing, NIP utils
-│  ├─ storage/                # storage adapters (client/server)
-│  └─ auth/                   # auth adapters (nip07, bunker, local, nip05)
-├─ plugins/                   # optional feature plugins (e.g., media upload)
-├─ templates/                 # NIP event templates + forms + renderers
-├─ examples/app/
-│  ├─ <component>/            # Minimal runnable MVPs (one per component)
+├─ framework/                 # 📦 npm Package (@johappel/nostr-framework)
+│  ├─ react/
+│  │  ├─ components/          # Headless UI components (production)
+│  │  ├─ hooks/               # Configuration & state hooks
+│  │  └─ index.ts             # Main exports for npm
+│  ├─ core/                   # Framework-agnostic core
+│  ├─ plugins/                # Storage & auth plugins
+│  ├─ types/                  # TypeScript definitions
+│  └─ package.json            # npm package configuration
+├─ examples/                  # 🎨 Development & Showcase
+│  ├─ app/<component>/        # Minimal runnable MVPs (shadcn/ui)
+│  ├─ components/
+│  │  ├─ ui/                  # shadcn/ui components
+│  │  └─ nostr-ui/            # Styled demo components
+│  └─ package.json            # Development dependencies
 ├─ docs/
 │  └─ components/             # <Component>.md specs (one per component)
 ├─ public/                    # static assets
@@ -44,22 +47,41 @@
 
 ### Folder responsibilities
 
-* **/core/**
+* **/framework/react/components/** (📦 **npm Package Production**)
+
+  * **Headless** UI components (no styling dependencies)
+  * Framework-agnostic with `components` prop for UI library override
+  * **Import**: `import { Component } from "@johappel/nostr-framework/react"`
+  * TypeScript definitions included; tree-shakable exports
+
+* **/framework/react/hooks/** (📦 **npm Package Production**)
+
+  * Configuration & state management hooks (useNostrConfig, etc.)
+  * SSR-safe, browser-agnostic with localStorage fallbacks
+  * **Import**: `import { useHook } from "@johappel/nostr-framework/react"`
+
+* **/framework/core/** (📦 **npm Package Production**)
 
   * Pure domain types (TypeScript) and Zod schemas (Events, Tags, NIPs)
   * Common helpers: ID utilities, tag helpers (`#t`, `#d`, `a`, `e`), dedupe/merge
   * No React, no browser globals; runs in Node/Edge
 
-* **/lib/**
+* **/framework/plugins/** (📦 **npm Package Production**)
 
-  * **/lib/nostr/**: `SimplePool` wrapper, subscribe/query utilities, publish orchestrator, relay health
-  * **/lib/storage/**: `StorageAdapter` interface + implementations (Dexie, server DB)
-  * **/lib/auth/**: `AuthAdapter` interface + adapters (NIP‑07, NIP‑46, Local, optional NIP‑05 resolver)
+  * Storage plugins (LocalStorage, SQLite, SQLite-File)
+  * Auth adapters (NIP‑07, NIP‑46, Local, optional NIP‑05 resolver)
+  * **Import**: `import { Plugin } from "@johappel/nostr-framework/plugins"`
 
-* **/components/nostr-ui/**
+* **/examples/components/nostr-ui/** (🎨 **Development & Showcase**)
 
-  * Headless + shadcn composed components for UI (Config Panel, Login, Profile, Query Builder, Lists, Grids, Chat, etc.)
-  * Strict prop types; no hard dependency on app routing
+  * **Styled** components using shadcn/ui + Tailwind CSS
+  * Local development imports: `import { Component } from "@/components/nostr-ui/Component"`
+  * Perfect for copy-paste into user projects
+
+* **/examples/components/ui/** (🎨 **Development & Showcase**)
+
+  * shadcn/ui components (Button, Card, Input, etc.)
+  * Tailwind CSS styling with FOERBICO design tokens
 
 * **/templates/**
 
@@ -297,13 +319,51 @@ CI checklist:
 
 ## 9. Contribution Checklist (for AGENTS)
 
-1. Create `/docs/components/<Component>.md` from the template
-2. Scaffold `/components/nostr-ui/<Component>.tsx`
-3. Add `/examples/app/<component>/page.tsx` with Copy‑Code button
-4. Write **unit tests** for logic and **e2e** for the example
-5. Wire to design tokens & shadcn primitives
-6. Add story to CHANGELOG with breaking changes flagged
-7. Request review; include screenshots/GIF of example
+### **🚀 Dual Implementation Strategy**
+
+Every component must be implemented **twice** for maximum compatibility:
+
+#### **Step 1: npm Package Component (Production)**
+1. Create `/framework/react/components/<Component>.tsx` (headless, no styling dependencies)
+2. Create `/framework/react/hooks/use<Component>.ts` if needed (state management)
+3. Add exports to `/framework/react/index.ts`
+4. Update `/framework/package.json` exports section
+
+#### **Step 2: Examples Component (Development & Showcase)**
+5. Create `/examples/components/nostr-ui/<Component>.tsx` (styled with shadcn/ui)
+6. Add `/examples/app/<component>/page.tsx` with Copy‑Code button
+7. Show **both** import methods in Copy-Code:
+   ```tsx
+   // 🚀 npm Package (Production):
+   import { Component } from "@johappel/nostr-framework/react"
+   
+   // 🔧 Local Development:
+   // import { Component } from "@/components/nostr-ui/Component"
+   ```
+
+#### **Step 3: Documentation & Testing**
+8. Create `/docs/components/<Component>.md` from the template
+9. Include **both** usage patterns in documentation
+10. Write **unit tests** for logic and **e2e** for the example
+11. Wire to design tokens & shadcn primitives (examples only)
+12. Add story to CHANGELOG with breaking changes flagged
+13. Request review; include screenshots/GIF of example
+
+### **📦 npm Package Guidelines**
+
+* **Headless Components**: No hardcoded styling; accept `components` prop
+* **Zero Dependencies**: Don't import shadcn/ui or other styling libraries
+* **Framework Agnostic**: Should work with any React setup (Next.js, Vite, CRA)
+* **SSR Safe**: Handle `typeof window === 'undefined'` in hooks
+* **TypeScript First**: Full type definitions with proper exports
+
+### **🎨 Examples Guidelines**
+
+* **Styled Components**: Use shadcn/ui + Tailwind CSS freely
+* **Copy-Paste Ready**: Users should be able to copy entire component
+* **Local Imports**: Use `@/` aliases for development convenience
+* **Responsive Design**: Works on mobile and desktop
+* **FOERBICO Theming**: Follow design system tokens
 
 ---
 
@@ -337,7 +397,69 @@ CI checklist:
 
 ---
 
-## 13. Appendix — Example Snippet (30023 Form minimal)
+## 13. Appendix — Import Patterns
+
+### **🚀 Production (npm Package)**
+```tsx
+// Recommended for production apps
+import { NostrConfigPanel, useNostrConfig } from "@johappel/nostr-framework/react"
+import { EventForm30023 } from "@johappel/nostr-framework/react/components"
+import { useEventSubmission } from "@johappel/nostr-framework/react/hooks"
+
+// With custom UI library (headless mode)
+import { Button } from "@mui/material"          // or any UI lib
+import { Card } from "@chakra-ui/react"
+import { Input } from "@headlessui/react"
+
+export function App() {
+  const { config, setConfig } = useNostrConfig()
+  
+  return (
+    <NostrConfigPanel
+      value={config}
+      onChange={setConfig}
+      components={{ Button, Card, Input }}  // Override styling
+    />
+  )
+}
+```
+
+### **🔧 Development (Local Examples)**
+```tsx
+// Local development in examples/ folder
+import { NostrConfigPanel } from "@/components/nostr-ui/NostrConfigPanel"
+import { useNostrConfig } from "@/components/nostr-ui/useNostrConfig"
+import { Button } from "@/components/ui/button"              // shadcn/ui
+import { Card } from "@/components/ui/card"
+
+export function App() {
+  const { config, setConfig } = useNostrConfig()
+  
+  return (
+    <NostrConfigPanel
+      value={config}
+      onChange={setConfig}
+      // No components prop needed - styling built-in
+    />
+  )
+}
+```
+
+### **📋 Copy-Code Template**
+Every example page should show both patterns:
+```tsx
+const code = `// 🚀 npm Package Usage (Production):
+import { Component } from "@johappel/nostr-framework/react"
+
+// 🔧 Local Development Usage (Examples):
+// import { Component } from "@/components/nostr-ui/Component"
+
+export default function Demo() {
+  return <Component />
+}`
+```
+
+## 14. Appendix — Example Snippet (30023 Form minimal)
 
 ```tsx
 import { z } from 'zod'
@@ -360,3 +482,9 @@ export function EventForm30023() {
   return (<Form>{/* ... */}<Button type="submit">Publish</Button></Form>)
 }
 ```
+
+## Windows Environment
+As Windows user, ensure your development environment is set up correctly:
+* Use Windows Terminal or Git Bash
+* Ensure Node.js and pnpm are installed and in PATH
+* Use PowerShell for commands

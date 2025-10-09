@@ -126,8 +126,12 @@ function CopyCodeButton({ code }: { code: string }) {
 }
 
 export default function Page() {
-  const code = `import { NostrConfigPanel } from "@/components/nostr-ui/NostrConfigPanel"
-import { useNostrConfig } from "@/components/nostr-ui/useNostrConfig"
+  const code = `// 🚀 npm Package Usage (Production):
+import { NostrConfigPanel, useNostrConfig } from "@johappel/nostr-framework/react"
+
+// 🔧 Local Development Usage (Examples):
+// import { NostrConfigPanel } from "@/components/nostr-ui/NostrConfigPanel"
+// import { useNostrConfig } from "@/components/nostr-ui/useNostrConfig"
 
 export default function Demo() {
   const { config, setConfig } = useNostrConfig()

@@ -20,8 +20,16 @@
       "types": "./dist/types/nextjs/index.d.ts"
     },
     "./react": {
-      "import": "./dist/react/simple-hooks.js",
-      "types": "./dist/types/react/simple-hooks.d.ts"
+      "import": "./dist/react/index.js",
+      "types": "./dist/types/react/index.d.ts"
+    },
+    "./react/components": {
+      "import": "./dist/react/components/NostrConfigPanel.js",
+      "types": "./dist/types/react/components/NostrConfigPanel.d.ts"
+    },
+    "./react/hooks": {
+      "import": "./dist/react/hooks/useNostrConfig.js",
+      "types": "./dist/types/react/hooks/useNostrConfig.d.ts"
     }
   },
   "files": [

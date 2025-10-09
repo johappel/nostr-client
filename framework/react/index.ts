@@ -5,6 +5,14 @@ import { useState, useCallback } from 'react';
 import { NostrFramework } from '../index.js';
 import type { FrameworkConfig, Identity } from '../types/index.js';
 
+// Export UI Components
+export { NostrConfigPanel } from './components/NostrConfigPanel.js';
+export type { NostrConfigPanelProps, RelayConfig } from './components/NostrConfigPanel.js';
+
+// Export Hooks
+export { useNostrConfig } from './hooks/useNostrConfig.js';
+export type { NostrConfig } from './hooks/useNostrConfig.js';
+
 /**
  * Hook für Framework-Initialisierung
  */
