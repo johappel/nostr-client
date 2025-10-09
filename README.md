@@ -1,6 +1,6 @@
 # Nostr Framework
 
-Ein modulares, plugin-basiertes Framework für Nostr-Client-Entwicklung mit Multi-Provider-Authentifizierung.
+Ein modulares, plugin-basiertes Framework für Nostr-Client-Entwicklung mit Multi-Provider-Authentifizierung und vollständiger TypeScript-Unterstützung.
 
 [![npm version](https://badge.fury.io/js/@johappel%2Fnostr-framework.svg)](https://badge.fury.io/js/@johappel%2Fnostr-framework)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -27,17 +27,18 @@ npm install nostr-tools@^2.8.1
 
 ### 2. Basic Usage
 
-```javascript
-import { NostrFramework } from '@johappel/nostr-framework';
+```typescript
+import { NostrFramework, type FrameworkConfig } from '@johappel/nostr-framework';
 
-const nostr = new NostrFramework({
+const config: FrameworkConfig = {
     relays: ['wss://relay.damus.io', 'wss://nos.lol']
-});
+};
 
+const nostr = new NostrFramework(config);
 await nostr.initialize();
 
 // Authentifizierung
-const identity = await nostr.authenticate('nip07');
+const identity = await nostr.identity.authenticate('nip07');
 console.log('Logged in:', identity.displayName || identity.npub);
 ```
 
@@ -102,232 +103,294 @@ npm install nostr-tools@^2.8.1
 
 ## 📦 Implementierte Module
 
-### Core Module
+### Core Module (TypeScript)
 
 #### 1. EventBus
 - Event-Bus für Framework-interne Kommunikation
-- Observer-Pattern
-- Debug-Modus
+- Observer-Pattern mit TypeScript-Unterstützung
+- Debug-Modus und Typisierte Events
 
-**Datei**: [`framework/core/EventBus.js`](framework/core/EventBus.js)
+**Datei**: [`framework/core/EventBus.ts`](framework/core/EventBus.ts)
 
 #### 2. IdentityManager
 - Zentrale Identity-Verwaltung
 - Multi-Provider-Authentifizierung
-- Plugin-Registry-System
+- Plugin-Registry-System mit Typen
 - Session-Persistenz (localStorage)
-- 7 Events für Identity-Änderungen
+- Typisierte Events für Identity-Änderungen
 
-**Datei**: [`framework/core/IdentityManager.js`](framework/core/IdentityManager.js)
+**Datei**: [`framework/core/IdentityManager.ts`](framework/core/IdentityManager.ts)
 
 #### 3. RelayManager
-- Multi-Relay-Verbindung
+- Multi-Relay-Verbindung mit ConnectionPool
 - Automatische Reconnect-Logik
-- Event-Filterung und Subscription
+- Event-Filterung und Subscription-Management
+- Typisierte Relay-Status und -Events
 
-**Datei**: [`framework/core/RelayManager.js`](framework/core/RelayManager.js)
+**Datei**: [`framework/core/RelayManager.ts`](framework/core/RelayManager.ts)
 
 #### 4. EventManager
 - Event-Erstellung und -Validierung
 - Templates für verschiedene Event-Typen
 - Signierung über verschiedene Provider
+- TypeScript Event-Interfaces
 
-**Datei**: [`framework/core/EventManager.js`](framework/core/EventManager.js)
+**Datei**: [`framework/core/EventManager.ts`](framework/core/EventManager.ts)
 
 #### 5. SignerManager
 - Zentrale Signier-Verwaltung
 - Multi-Provider-Unterstützung
 - Verschlüsselung (NIP-04, NIP-44)
+- Typisierte Signer-Capabilities
 
-**Datei**: [`framework/core/SignerManager.js`](framework/core/SignerManager.js)
+**Datei**: [`framework/core/SignerManager.ts`](framework/core/SignerManager.ts)
 
 #### 6. StorageManager
-- Plugin-basiertes Storage
+- Plugin-basiertes Storage-System
 - LocalStorage und SQLite Unterstützung
-- Daten-Persistenz
+- Daten-Persistenz mit TypeScript-Interfaces
 
-**Datei**: [`framework/core/StorageManager.js`](framework/core/StorageManager.js)
+**Datei**: [`framework/core/StorageManager.ts`](framework/core/StorageManager.ts)
 
 #### 7. TemplateEngine
-- Event-Templates
+- Event-Templates mit Schema-Validierung
 - NIP-konforme Event-Erstellung
-- Wiederverwendbare Vorlagen
+- Wiederverwendbare typisierte Vorlagen
 
-**Datei**: [`framework/core/TemplateEngine.js`](framework/core/TemplateEngine.js)
+**Datei**: [`framework/core/TemplateEngine.ts`](framework/core/TemplateEngine.ts)
 
-### Auth Plugins
+### Auth Plugins (TypeScript)
 
 #### AuthPlugin (Base Interface)
-- Base-Klasse für alle Auth-Plugins
-- Definiert Interface-Methoden
+- TypeScript Base-Klasse für alle Auth-Plugins
+- Definiert typisierte Interface-Methoden
+- Vollständige Kapabilitäts-Deklaration
 
-**Datei**: [`framework/plugins/auth/AuthPlugin.js`](framework/plugins/auth/AuthPlugin.js)
+**Datei**: [`framework/plugins/auth/AuthPlugin.ts`](framework/plugins/auth/AuthPlugin.ts)
 
 #### NIP-07 Plugin ✨
 - Browser-Extension-Unterstützung (Alby, nos2x, Flamingo)
-- Event-Signierung
+- Event-Signierung mit TypeScript-Interfaces
 - NIP-04 Verschlüsselung/Entschlüsselung
 - NIP-44 Verschlüsselung/Entschlüsselung
 - Automatische Session-Wiederherstellung
 - **Metadaten-Abruf** (displayName, profile info)
 
-**Datei**: [`framework/plugins/auth/Nip07Plugin.js`](framework/plugins/auth/Nip07Plugin.js)
+**Datei**: [`framework/plugins/auth/Nip07Plugin.ts`](framework/plugins/auth/Nip07Plugin.ts)
 
 #### NIP-46 Plugin 🔗
 - Remote Signer (Bunker) Unterstützung
 - bunker:// und nostrconnect:// URIs
-- Auto-Reconnect
+- Auto-Reconnect mit typed Events
 - **Metadaten-Abruf** (displayName, profile info)
 
-**Datei**: [`framework/plugins/auth/Nip46Plugin.js`](framework/plugins/auth/Nip46Plugin.js)
+**Datei**: [`framework/plugins/auth/Nip46Plugin.ts`](framework/plugins/auth/Nip46Plugin.ts)
 
 #### NSEC Plugin ⚠️
 - **UNSAFE** - Nur für Testing/Entwicklung
-- Lokale nsec/hex Schlüssel
+- Lokale nsec/hex Schlüssel mit TypeScript-Validation
 - Volle NIP-04/NIP-44 Unterstützung
 - Test-Schlüssel-Generator
 - **Metadaten-Abruf** (displayName, profile info)
 
-**Datei**: [`framework/plugins/auth/NsecPlugin.js`](framework/plugins/auth/NsecPlugin.js)
+**Datei**: [`framework/plugins/auth/NsecPlugin.ts`](framework/plugins/auth/NsecPlugin.ts)
 
-### Konfiguration
+### Konfiguration & Type System
 
-#### Zentrale Config
-- Überschreibbare Standard-Werte
+#### Zentrale Config mit TypeScript
+- Überschreibbare Standard-Werte mit Typen
+- FrameworkConfig Interface
 - Relays, nostr-tools URL, Cache-Dauer
 - User-spezifische Konfiguration
 
-**Datei**: [`framework/config.js`](framework/config.js)
-**Beispiel**: [`config.example.html`](config.example.html)
+**Dateien**: 
+- [`framework/config.ts`](framework/config.ts)
+- [`framework/types/index.ts`](framework/types/index.ts) - Alle TypeScript-Interfaces
 
 ## 💻 Verwendung
 
-### Basic Example
+### Basic Example (TypeScript)
 
-```javascript
-import { NostrFramework } from '@johappel/nostr-framework';
+```typescript
+import { NostrFramework, type FrameworkConfig } from '@johappel/nostr-framework';
 
-// Initialize mit Standard-Config
-const nostr = new NostrFramework();
+// Initialize mit typisierter Config
+const config: FrameworkConfig = {
+  relays: ['wss://relay.damus.io', 'wss://nos.lol'],
+  debug: true
+};
+
+const nostr = new NostrFramework(config);
 await nostr.initialize();
 
 // Login mit NIP-07 Extension
-const identity = await nostr.authenticate('nip07');
+const identity = await nostr.identity.authenticate('nip07');
 console.log('Logged in:', identity.displayName || identity.npub);
 
-// Event erstellen und signieren
-const event = await nostr.createEvent({
-  kind: 1,
+// Event erstellen und signieren über EventManager
+const event = await nostr.events.create('text-note', {
   content: 'Hello Nostr!'
 });
 
-const signed = await nostr.signEvent(event);
-await nostr.publishEvent(signed);
+const result = await nostr.events.publish(event);
+console.log('Published:', result);
 ```
 
-### Mit Konfiguration
+### Mit detaillierter Konfiguration
 
-```javascript
-// Config vor Framework-Laden definieren
-window.NostrConfig = {
+```typescript
+import { NostrFramework, type FrameworkConfig, type StorageConfig } from '@johappel/nostr-framework';
+
+const config: FrameworkConfig = {
   relays: [
     'wss://relay.damus.io',
     'wss://relay.snort.social',
     'wss://nos.lol'
   ],
-  metadataCacheDuration: 1800000 // 30 Minuten
+  metadataCacheDuration: 1800000, // 30 Minuten
+  debug: process.env.NODE_ENV === 'development',
+  standardTemplates: true,
+  storage: {
+    type: 'localStorage'
+  } as StorageConfig
 };
 
-import { NostrFramework } from '@johappel/nostr-framework';
-
-const nostr = new NostrFramework();
+const nostr = new NostrFramework(config);
 await nostr.initialize();
 ```
 
-### Verschiedene Auth-Methoden
+### Verschiedene Auth-Methoden (TypeScript)
 
-```javascript
+```typescript
+import { NostrFramework, type Identity, type AuthCredentials } from '@johappel/nostr-framework';
+
+const nostr = new NostrFramework();
+await nostr.initialize();
+
 // NIP-07 (Browser Extension)
-const identity1 = await nostr.authenticate('nip07');
+const identity1: Identity = await nostr.identity.authenticate('nip07');
 
-// NIP-46 (Remote Bunker)
-const identity2 = await nostr.authenticate('nip46', {
-  uri: 'bunker://...'
-});
+// NIP-46 (Remote Bunker)  
+const credentials: AuthCredentials = { uri: 'bunker://...' };
+const identity2: Identity = await nostr.identity.authenticate('nip46', credentials);
 
 // NSEC (⚠️ UNSAFE - nur für Tests)
-const identity3 = await nostr.authenticate('nsec', {
-  nsec: 'nsec1...'
-});
+const nsecCredentials: AuthCredentials = { nsec: 'nsec1...' };
+const identity3: Identity = await nostr.identity.authenticate('nsec', nsecCredentials);
 
 // Test-Schlüssel generieren (⚠️ UNSAFE)
 const { NsecPlugin } = await import('@johappel/nostr-framework/plugins/auth/NsecPlugin.js');
 const testKey = await NsecPlugin.generateTestKey();
 console.log('Test nsec:', testKey.nsec);
-```
+```### Mit Event Listeners (TypeScript)
 
-### Mit Event Listeners
+```typescript
+import { NostrFramework, type Identity, type FrameworkEvents } from '@johappel/nostr-framework';
 
-```javascript
-// Identity-Änderungen überwachen
-nostr.on('identity:login', (data) => {
+const nostr = new NostrFramework();
+
+// Typisierte Event Listeners
+nostr.on('identity:login', (data: FrameworkEvents['identity:login']) => {
   console.log('User logged in:', data.identity.displayName);
 });
 
-nostr.on('identity:logout', (data) => {
+nostr.on('identity:logout', (data: FrameworkEvents['identity:logout']) => {
   console.log('User logged out');
 });
 
-nostr.on('identity:changed', (identity) => {
+nostr.on('identity:changed', (identity: Identity | null) => {
   if (identity) {
     console.log('Identity changed:', identity.displayName || identity.npub);
   } else {
     console.log('Identity cleared');
   }
 });
+
+// Framework Events
+nostr.on('framework:initialized', () => {
+  console.log('Framework ready');
+});
 ```
 
-### Verschlüsselung (NIP-04/NIP-44)
+### Verschlüsselung (NIP-04/NIP-44) TypeScript
 
-```javascript
-const signer = nostr.getSigner();
+```typescript
+import { NostrFramework, type SignerPlugin } from '@johappel/nostr-framework';
 
-// NIP-04 Encrypt
-const encrypted04 = await signer.nip04Encrypt(
-  recipientPubkey,
-  'Secret message'
-);
+const nostr = new NostrFramework();
+await nostr.initialize();
 
-// NIP-04 Decrypt
-const decrypted04 = await signer.nip04Decrypt(
-  senderPubkey,
-  encrypted04
-);
+// Typisierter Signer
+const signer: SignerPlugin | null = nostr.signer.getSigner();
 
-// NIP-44 Encrypt (moderner)
-const encrypted44 = await signer.nip44Encrypt(
-  recipientPubkey,
-  'Secret message'
-);
+if (signer) {
+  const recipientPubkey = '...';
+  const senderPubkey = '...';
 
-// NIP-44 Decrypt
-const decrypted44 = await signer.nip44Decrypt(
-  senderPubkey,
-  encrypted44
-);
+  // NIP-04 Encrypt (mit Capability-Check)
+  if (signer.nip04Encrypt) {
+    const encrypted04: string = await signer.nip04Encrypt(
+      recipientPubkey,
+      'Secret message'
+    );
+    
+    // NIP-04 Decrypt
+    if (signer.nip04Decrypt) {
+      const decrypted04: string = await signer.nip04Decrypt(
+        senderPubkey,
+        encrypted04
+      );
+    }
+  }
+
+  // NIP-44 Encrypt (moderner, mit Capability-Check)
+  if (signer.nip44Encrypt) {
+    const encrypted44: string = await signer.nip44Encrypt(
+      recipientPubkey,
+      'Secret message'
+    );
+    
+    // NIP-44 Decrypt
+    if (signer.nip44Decrypt) {
+      const decrypted44: string = await signer.nip44Decrypt(
+        senderPubkey,
+        encrypted44
+      );
+    }
+  }
+
+  // Capabilities prüfen
+  const capabilities = signer.getCapabilities();
+  console.log('Signer capabilities:', capabilities);
+}
 ```
 
-### Metadaten abrufen
+### Metadaten abrufen (TypeScript)
 
-```javascript
-// Metadaten werden automatisch geholt
-const identity = await nostr.authenticate('nip07');
+```typescript
+import { NostrFramework, type Identity, type NostrProfile } from '@johappel/nostr-framework';
+
+const nostr = new NostrFramework();
+
+// Metadaten werden automatisch geholt und typisiert
+const identity: Identity = await nostr.identity.authenticate('nip07');
 console.log('Display Name:', identity.displayName);
-console.log('Profile:', identity.metadata);
+
+// Typisierte Metadaten
+const profile: NostrProfile | undefined = identity.metadata;
+if (profile) {
+  console.log('Name:', profile.name);
+  console.log('About:', profile.about);
+  console.log('Picture:', profile.picture);
+  console.log('NIP-05:', profile.nip05);
+  console.log('LUD16:', profile.lud16);
+}
 
 // Manuell Metadaten aktualisieren
-const updatedIdentity = await nostr.refreshMetadata();
-console.log('Updated:', updatedIdentity.metadata);
+const updatedIdentity: Identity | null = await nostr.identity.refreshMetadata();
+if (updatedIdentity?.metadata) {
+  console.log('Updated profile:', updatedIdentity.metadata);
+}
 ```
 
 ## 🧪 Testing
@@ -372,40 +435,46 @@ Die Test-HTML-Dateien bieten interaktive UIs zum Testen aller Funktionen:
 ```
 nostr-client/
 ├── framework/
-│   ├── core/                    # Core Module
-│   │   ├── EventBus.js
-│   │   ├── IdentityManager.js
-│   │   ├── RelayManager.js
-│   │   ├── EventManager.js
-│   │   ├── SignerManager.js
-│   │   ├── StorageManager.js
-│   │   └── TemplateEngine.js
+│   ├── core/                    # Core Module (TypeScript)
+│   │   ├── EventBus.ts
+│   │   ├── IdentityManager.ts
+│   │   ├── RelayManager.ts
+│   │   ├── EventManager.ts
+│   │   ├── SignerManager.ts
+│   │   ├── StorageManager.ts
+│   │   └── TemplateEngine.ts
 │   │
 │   ├── plugins/
-│   │   ├── auth/               # Auth-Plugins
-│   │   │   ├── AuthPlugin.js
-│   │   │   ├── Nip07Plugin.js
-│   │   │   ├── Nip46Plugin.js
-│   │   │   └── NsecPlugin.js
+│   │   ├── auth/               # Auth-Plugins (TypeScript)
+│   │   │   ├── AuthPlugin.ts
+│   │   │   ├── Nip07Plugin.ts
+│   │   │   ├── Nip46Plugin.ts
+│   │   │   └── NsecPlugin.ts
 │   │   ├── storage/            # Storage-Plugins
-│   │   │   ├── StoragePlugin.js
+│   │   │   ├── StoragePlugin.ts
 │   │   │   ├── LocalStoragePlugin.js
 │   │   │   └── SQLitePlugin.js
 │   │   └── signer/             # Signer-Plugins
-│   │       ├── SignerPlugin.js
+│   │       ├── SignerPlugin.ts
 │   │       └── MockSigner.js
 │   │
 │   ├── templates/              # Event-Templates
-│   │   ├── EventTemplate.js
+│   │   ├── EventTemplate.ts
 │   │   ├── nip01.js
 │   │   ├── nip09.js
 │   │   └── nip52.js
 │   │
-│   ├── config.js               # Zentrale Konfiguration
-│   └── index.js               # Main export
+│   ├── types/                  # TypeScript Definitions
+│   │   └── index.ts           # Alle Framework-Typen
+│   │
+│   ├── config.ts              # Zentrale Konfiguration (TypeScript)
+│   ├── index.ts              # Main export (TypeScript)
+│   ├── tsconfig.json         # TypeScript Config
+│   └── package.json          # Framework Package
 │
 ├── docs/                      # Dokumentation
-├── test-*.html               # Test-Dateien
+├── tests/                     # Next.js Test App
+├── test-*.html               # Browser Test-Dateien
 ├── config.example.html       # Konfigurations-Beispiel
 ├── package.json
 └── README.md
@@ -457,15 +526,23 @@ Das NIP-07 Plugin benötigt eine installierte Browser-Extension:
 - [x] Test-Schlüssel-Generator
 - [x] Vollständige NIP-04/NIP-44 Unterstützung
 
-### ✅ Features (v1.1.2)
-- [x] TypeScript Support
+### ✅ Features (v2.0.0) - TypeScript Migration
+- [x] Vollständige TypeScript-Unterstützung
+- [x] Typisierte Core-Module
+- [x] Type-Safe Plugin-Interfaces
+- [x] Framework Event Types
+- [x] Comprehensive Type Definitions
+- [x] IntelliSense & Auto-Completion
 
 ### 🔮 Zukünftige Features
+- [ ] Vollständige Plugin-Migration zu TypeScript
+- [ ] Template-System zu TypeScript
 - [ ] WordPress API Plugin
 - [ ] NIP-05 Verifikation
-- [ ] NIP-57 Zap Handling
+- [ ] NIP-57 Zap Handling  
 - [ ] NIP-28 Group Chat
 - [ ] Erweiterte Templates
+- [ ] React/Next.js Integration Hooks
 
 ### 🔮 Dokumentation
 - [x] API-Dokumentation
@@ -533,5 +610,5 @@ Für schnelle Tests und Prototyping:
 </script>
 ```
 
-**Version**: 1.1.6
-**Letztes Update**: Metadaten-Abruf, zentrale Konfiguration, NSEC Plugin
+**Version**: 2.0.0
+**Letztes Update**: Vollständige TypeScript-Migration, typisierte Core-Module, Framework Event Types

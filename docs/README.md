@@ -4,7 +4,7 @@ Willkommen zur umfassenden Dokumentation des Nostr Frameworks. Diese Dokumentati
 
 ## Übersicht
 
-Das Nostr Framework ist ein modulares JavaScript-Framework für die Entwicklung von Nostr-Clients. Es bietet eine saubere Architektur, plugin-basierte Erweiterbarkeit und umfassende APIs für alle Aspekte der Nostr-Entwicklung.
+Das Nostr Framework ist ein modulares TypeScript-Framework für die Entwicklung von Nostr-Clients. Es bietet vollständige Typsicherheit, eine saubere Architektur, plugin-basierte Erweiterbarkeit und umfassende APIs für alle Aspekte der Nostr-Entwicklung.
 
 ## Dokumentationsstruktur
 
@@ -50,51 +50,54 @@ Informationen für Framework-Entwickler:
 
 ## Schnellstart-Beispiel
 
-```javascript
-import { NostrFramework, LocalStoragePlugin } from './framework/index.js';
+```typescript
+import { NostrFramework, type FrameworkConfig, type Identity } from '@johappel/nostr-framework';
 
-// Framework initialisieren
-const nostr = new NostrFramework({
+// Framework mit typisierten Konfigurationen initialisieren
+const config: FrameworkConfig = {
   relays: ['wss://relay.damus.io', 'wss://nos.lol'],
-  storage: new LocalStoragePlugin(),
-  debug: true
-});
+  debug: true,
+  standardTemplates: true
+};
 
+const nostr = new NostrFramework(config);
 await nostr.initialize();
 
-// Authentifizieren (NIP-07)
-if (window.nostr) {
-  const identity = await nostr.identity.authenticate('nip07');
+// Authentifizieren (NIP-07) mit Type Safety
+if (typeof window !== 'undefined' && window.nostr) {
+  const identity: Identity = await nostr.identity.authenticate('nip07');
   console.log('Authenticated as:', identity.npub);
+  console.log('Display name:', identity.displayName);
 }
 
-// Text Note erstellen und veröffentlichen
-const result = await nostr.events.createAndPublish('text-note', {
+// Text Note erstellen und veröffentlichen mit Event Manager
+const event = await nostr.events.create('text-note', {
   content: 'Hello from Nostr Framework!',
   tags: [['t', 'greeting']]
 });
 
-console.log('Event published:', result.success);
+const result = await nostr.events.publish(event);
+console.log('Event published:', result);
 ```
 
 ## Hauptkomponenten
 
-### Core Module
+### Core Module (TypeScript)
 
-- **EventBus** - Zentrales Event-System
-- **IdentityManager** - Authentifizierung und Identitätsverwaltung
-- **SignerManager** - Event-Signierung und Verschlüsselung
-- **TemplateEngine** - Event-Templates und Validierung
-- **RelayManager** - Relay-Verbindungen und -Operationen
-- **EventManager** - Zentrale Event-Verwaltung
-- **StorageManager** - Lokale Speicherung und Synchronisation
-- **NostrFramework** - Hauptklasse, die alles orchestriert
+- **EventBus** - Zentrales Event-System mit typisierten Events
+- **IdentityManager** - Authentifizierung und Identitätsverwaltung mit typed Identity interfaces
+- **SignerManager** - Event-Signierung und Verschlüsselung mit Capability-System
+- **TemplateEngine** - Event-Templates mit Schema-Validierung
+- **RelayManager** - Relay-Verbindungen mit Connection Pooling und Status-Tracking
+- **EventManager** - Zentrale Event-Verwaltung mit Template-Integration
+- **StorageManager** - Plugin-basierte lokale Speicherung mit typisierten Adaptern
+- **NostrFramework** - Hauptklasse mit vollständiger TypeScript-Integration
 
-### Plugins
+### Plugins (TypeScript)
 
-- **Auth Plugins** - NIP-07, NIP-46, Local Keys, OAuth2
-- **Signer Plugins** - Verschiedene Signier-Implementierungen
-- **Storage Plugins** - LocalStorage, IndexedDB, SQLite
+- **Auth Plugins** - NIP-07, NIP-46, NSEC mit typisierten Interfaces
+- **Signer Plugins** - Verschiedene Signier-Implementierungen mit Capability-System
+- **Storage Plugins** - LocalStorage, IndexedDB, SQLite mit typisierten Adaptern
 
 ### Templates
 

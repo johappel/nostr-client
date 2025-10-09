@@ -1,39 +1,48 @@
 # NostrFramework API-Referenz
 
-Die NostrFramework-Klasse ist die Hauptklasse, die alle Framework-Module orchestriert. Sie bietet eine einheitliche Schnittstelle für die Entwicklung von Nostr-Clients.
+Die NostrFramework-Klasse ist die Hauptklasse, die alle Framework-Module orchestriert. Sie bietet eine einheitliche, typisierte Schnittstelle für die Entwicklung von Nostr-Clients.
 
 ## Import
 
-```javascript
-import { NostrFramework } from './framework/index.js';
+```typescript
+import { NostrFramework, type FrameworkConfig } from '@johappel/nostr-framework';
 ```
 
 ## Konstruktor
 
-```javascript
-const nostr = new NostrFramework(config);
+```typescript
+const nostr = new NostrFramework(config?: FrameworkConfig);
 ```
 
 **Parameter:**
-- `config` (Object, optional): Konfigurations-Objekt
+- `config` (FrameworkConfig, optional): Typisiertes Konfigurations-Objekt
   - `relays` (string[]): Array von Relay-URLs
-  - `storage` (StoragePlugin): Storage-Plugin-Instanz
-  - `standardTemplates` (boolean): Standard-Templates registrieren (Standard: true)
+  - `nostrToolsBaseUrl` (string): Base URL für nostr-tools CDN
+  - `metadataCacheDuration` (number): Metadaten-Cache-Dauer in ms
+  - `relayTimeout` (number): Relay-Verbindungs-Timeout
+  - `maxCacheSize` (number): Maximale Cache-Größe
   - `debug` (boolean): Debug-Modus aktivieren (Standard: false)
+  - `standardTemplates` (boolean): Standard-Templates registrieren (Standard: true)
+  - `storage` (StorageConfig): Storage-Konfiguration
 
 **Beispiel:**
-```javascript
-import { NostrFramework, LocalStoragePlugin } from './framework/index.js';
+```typescript
+import { NostrFramework, type FrameworkConfig, type StorageConfig } from '@johappel/nostr-framework';
 
-const nostr = new NostrFramework({
+const config: FrameworkConfig = {
   relays: [
     'wss://relay.damus.io',
     'wss://nos.lol',
     'wss://relay.nostr.band'
   ],
-  storage: new LocalStoragePlugin(),
-  debug: true
-});
+  storage: {
+    type: 'localStorage'
+  } as StorageConfig,
+  debug: process.env.NODE_ENV === 'development',
+  metadataCacheDuration: 1800000 // 30 Minuten
+};
+
+const nostr = new NostrFramework(config);
 ```
 
 ## Eigenschaften
@@ -43,9 +52,84 @@ const nostr = new NostrFramework({
 **Typ:** IdentityManager  
 Zugriff auf den IdentityManager für Authentifizierung und Identitätsverwaltung.
 
-```javascript
-const isAuthenticated = nostr.identity.isAuthenticated();
-const currentIdentity = nostr.identity.getCurrentIdentity();
+```typescript
+const isAuthenticated: boolean = nostr.identity.isAuthenticated();
+const currentIdentity: Identity | null = nostr.identity.getCurrentIdentity();
+
+// Authenticate with type safety
+const identity: Identity = await nostr.identity.authenticate('nip07');
+```
+
+### events
+
+**Typ:** EventManager  
+Zugriff auf den EventManager für Event-Erstellung und -Veröffentlichung.
+
+```typescript
+// Create event with template
+const event = await nostr.events.create('text-note', {
+  content: 'Hello World!'
+});
+
+// Publish event
+const result = await nostr.events.publish(event);
+```
+
+### relay
+
+**Typ:** RelayManager  
+Zugriff auf den RelayManager für Relay-Operationen.
+
+```typescript
+// Get relay status
+const status = nostr.relay.getRelayStatus('wss://relay.damus.io');
+console.log('Status:', status.status); // 'connected' | 'connecting' | 'disconnected' | 'error'
+
+// Subscribe to events
+const subscription = nostr.relay.subscribe([{ kinds: [1] }], {
+  onEvent: (event) => console.log('New event:', event)
+});
+```
+
+### signer
+
+**Typ:** SignerManager  
+Zugriff auf den SignerManager für Event-Signierung.
+
+```typescript
+const signer = nostr.signer.getSigner();
+if (signer) {
+  const capabilities = signer.getCapabilities();
+  console.log('Can encrypt:', capabilities.canEncrypt);
+}
+```
+
+### storage
+
+**Typ:** StorageManager  
+Zugriff auf den StorageManager für lokale Speicherung.
+
+```typescript
+// Store events locally
+await nostr.storage.save([event]);
+
+// Query stored events  
+const events = await nostr.storage.query([{ kinds: [1] }]);
+```
+
+### templates
+
+**Typ:** TemplateEngine  
+Zugriff auf die TemplateEngine für Event-Templates.
+
+```typescript
+// Register custom template
+nostr.templates.registerTemplate('custom-note', customTemplate);
+
+// Use template
+const event = nostr.templates.buildEvent('text-note', {
+  content: 'Hello!'
+});
 ```
 
 ### signer

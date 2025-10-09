@@ -1,16 +1,17 @@
 # Installation Guide
 
-This guide covers different ways to install and set up the Nostr Framework v1.1.0.
+This guide covers different ways to install and set up the Nostr Framework v2.0.0 with full TypeScript support.
 
 ## Table of Contents
 
 1. [NPM Installation](#npm-installation)
 2. [CDN Installation](#cdn-installation)
 3. [Development Setup](#development-setup)
-4. [Configuration](#configuration)
-5. [Testing](#testing)
-6. [Browser Support](#browser-support)
-7. [Troubleshooting](#troubleshooting)
+4. [TypeScript Configuration](#typescript-configuration)
+5. [Configuration](#configuration)
+6. [Testing](#testing)
+7. [Browser Support](#browser-support)
+8. [Troubleshooting](#troubleshooting)
 
 ## NPM Installation
 
@@ -18,36 +19,53 @@ This guide covers different ways to install and set up the Nostr Framework v1.1.
 
 - Node.js 18.0.0 or higher
 - npm or yarn package manager
+- TypeScript 4.8+ (for TypeScript projects)
 
 ### Install Package
 
 ```bash
-npm install @johappel/nostr-framework@1.1.0
+# Install the framework
+npm install @johappel/nostr-framework@^2.0.0
+
+# Install required peer dependency
+npm install nostr-tools@^2.8.1
 ```
 
-### Basic Setup
+### Basic Setup (TypeScript)
 
-```javascript
-import { NostrFramework } from '@johappel/nostr-framework';
+```typescript
+import { NostrFramework, type FrameworkConfig, type Identity } from '@johappel/nostr-framework';
 
-const nostr = new NostrFramework();
+const config: FrameworkConfig = {
+  relays: ['wss://relay.damus.io', 'wss://nos.lol'],
+  debug: process.env.NODE_ENV === 'development'
+};
+
+const nostr = new NostrFramework(config);
 await nostr.initialize();
 
-// Authenticate with NIP-07 extension
-const identity = await nostr.authenticate('nip07');
+// Authenticate with NIP-07 extension (fully typed)
+const identity: Identity = await nostr.identity.authenticate('nip07');
 console.log('Logged in:', identity.displayName || identity.npub);
 ```
 
-### Individual Plugin Imports
+### Individual Plugin Imports (TypeScript)
 
-```javascript
-// Import specific plugins
+```typescript
+// Import specific plugins with types
 import { Nip07Plugin } from '@johappel/nostr-framework/plugins/auth/Nip07Plugin.js';
 import { Nip46Plugin } from '@johappel/nostr-framework/plugins/auth/Nip46Plugin.js';
 import { NsecPlugin } from '@johappel/nostr-framework/plugins/auth/NsecPlugin.js';
 
-// Import configuration
+// Import configuration and types
 import { Config } from '@johappel/nostr-framework/config.js';
+import type { 
+  FrameworkConfig, 
+  Identity, 
+  AuthCredentials,
+  SignedEvent,
+  UnsignedEvent 
+} from '@johappel/nostr-framework';
 ```
 
 ## CDN Installation
@@ -61,7 +79,7 @@ import { Config } from '@johappel/nostr-framework/config.js';
   const nostr = new NostrFramework();
   await nostr.initialize();
   
-  const identity = await nostr.authenticate('nip07');
+  const identity = await nostr.identity.authenticate('nip07');
   console.log('Hello Nostr!', identity.displayName);
 </script>
 ```
@@ -78,6 +96,59 @@ import { Config } from '@johappel/nostr-framework/config.js';
 <script type="module">
   import { NostrFramework } from 'https://cdn.skypack.dev/@johappel/nostr-framework/framework/index.js';
 </script>
+```
+
+## TypeScript Configuration
+
+### tsconfig.json
+
+For optimal TypeScript support, add these settings to your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+```
+
+### Type Definitions
+
+The framework exports comprehensive TypeScript definitions:
+
+```typescript
+// Core types
+import type {
+  FrameworkConfig,
+  Identity,
+  NostrProfile,
+  IdentityCapabilities,
+  SignedEvent,
+  UnsignedEvent,
+  EventTemplate,
+  TemplateSchema,
+  SignerPlugin,
+  SignerCapabilities,
+  StorageConfig,
+  RelayConfig,
+  FrameworkEvents
+} from '@johappel/nostr-framework';
+
+// Event callback types
+import type {
+  EventCallback,
+  EventUnsubscriber,
+  EventHandler
+} from '@johappel/nostr-framework';
 ```
 
 ### CDN with Configuration

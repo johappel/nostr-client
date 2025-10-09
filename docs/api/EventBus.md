@@ -1,26 +1,26 @@
 # EventBus API-Referenz
 
-Der EventBus ist das zentrale Event-System des Nostr Frameworks. Er ermöglicht die entkoppelte Kommunikation zwischen allen Modulen mittels des Observer-Patterns.
+Der EventBus ist das zentrale Event-System des Nostr Frameworks. Er ermöglicht die entkoppelte Kommunikation zwischen allen Modulen mittels eines typisierten Observer-Patterns.
 
 ## Import
 
-```javascript
-import { EventBus } from './framework/core/EventBus.js';
+```typescript
+import { EventBus, type EventCallback, type EventUnsubscriber } from '@johappel/nostr-framework';
 ```
 
 ## Konstruktor
 
-```javascript
+```typescript
 const eventBus = new EventBus();
 ```
 
 **Eigenschaften:**
-- `_listeners` (Map): Interne Listener-Registrierung
+- `_listeners` (Map<string, EventCallback[]>): Interne typisierte Listener-Registrierung
 - `_debugMode` (boolean): Debug-Modus Status
 
 ## Methoden
 
-### setDebugMode(enabled)
+### setDebugMode(enabled: boolean): void
 
 Aktiviert/deaktiviert den Debug-Modus für detaillierte Logging-Ausgaben.
 
@@ -28,56 +28,62 @@ Aktiviert/deaktiviert den Debug-Modus für detaillierte Logging-Ausgaben.
 - `enabled` (boolean): Debug-Modus aktivieren/deaktivieren
 
 **Beispiel:**
-```javascript
+```typescript
 const eventBus = new EventBus();
 eventBus.setDebugMode(true);
 // Output: [EventBus] Debug mode enabled
 ```
 
-### on(event, callback)
+### on<T = any>(event: string, callback: EventCallback<T>): EventUnsubscriber
 
-Registriert einen Event-Listener für ein bestimmtes Event.
+Registriert einen typisierten Event-Listener für ein bestimmtes Event.
 
 **Parameter:**
 - `event` (string): Event-Name
-- `callback` (Function): Callback-Funktion
+- `callback` (EventCallback<T>): Typisierte Callback-Funktion
 
 **Rückgabewert:**
-- Function: Unsubscribe-Funktion
+- EventUnsubscriber: Typisierte Unsubscribe-Funktion
 
 **Beispiel:**
-```javascript
-const unsubscribe = eventBus.on('user:login', (data) => {
+```typescript
+interface LoginData {
+  userId: string;
+  displayName?: string;
+}
+
+const unsubscribe: EventUnsubscriber = eventBus.on<LoginData>('user:login', (data) => {
   console.log('User logged in:', data.userId);
+  console.log('Display name:', data.displayName);
 });
 
-// Event auslösen
-eventBus.emit('user:login', { userId: '123' });
+// Event auslösen mit typisierten Daten
+eventBus.emit('user:login', { userId: '123', displayName: 'Alice' });
 
 // Listener entfernen
 unsubscribe();
 ```
 
-### off(event, callback)
+### off(event: string, callback: EventCallback): void
 
 Entfernt einen spezifischen Event-Listener.
 
 **Parameter:**
 - `event` (string): Event-Name
-- `callback` (Function): Zu entfernende Callback-Funktion
+- `callback` (EventCallback): Zu entfernende Callback-Funktion
 
 **Beispiel:**
-```javascript
-const callback = (data) => console.log('Received:', data);
+```typescript
+const callback: EventCallback = (data) => console.log('Received:', data);
 eventBus.on('test', callback);
 
 // Listener entfernen
 eventBus.off('test', callback);
 ```
 
-### once(event, callback)
+### once<T = any>(event: string, callback: EventCallback<T>): EventUnsubscriber
 
-Registriert einen einmaligen Event-Listener, der nach dem ersten Aufruf automatisch entfernt wird.
+Registriert einen einmaligen typisierten Event-Listener, der nach dem ersten Aufruf automatisch entfernt wird.
 
 **Parameter:**
 - `event` (string): Event-Name

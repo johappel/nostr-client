@@ -1,32 +1,32 @@
 # IdentityManager API-Referenz
 
-Der IdentityManager verwaltet Benutzer-Identitäten und Authentifizierung über verschiedene Provider. Er unterstützt Multi-Provider-Auth, Session-Persistenz und Plugin-Registry.
+Der IdentityManager verwaltet Benutzer-Identitäten und Authentifizierung über verschiedene Provider. Er unterstützt Multi-Provider-Auth, Session-Persistenz und typisierte Plugin-Registry.
 
 ## Import
 
-```javascript
-import { IdentityManager } from './framework/core/IdentityManager.js';
+```typescript
+import { IdentityManager, type Identity, type AuthCredentials } from '@johappel/nostr-framework';
 ```
 
 ## Konstruktor
 
-```javascript
-const identityManager = new IdentityManager(eventBus);
+```typescript
+const identityManager = new IdentityManager(eventBus?: EventBus | null);
 ```
 
 **Parameter:**
-- `eventBus` (EventBus, optional): EventBus-Instanz für die Kommunikation. Wenn nicht angegeben, wird eine neue erstellt.
+- `eventBus` (EventBus | null, optional): EventBus-Instanz für die Kommunikation. Wenn nicht angegeben, wird eine neue erstellt.
 
 **Eigenschaften:**
 - `_eventBus` (EventBus): EventBus-Instanz
-- `_plugins` (Map): Registrierte Auth-Plugins
-- `_currentPlugin` (AuthPlugin|null): Aktueller Auth-Plugin
-- `_currentIdentity` (Identity|null): Aktuelle Benutzer-Identität
+- `_plugins` (Map<string, any>): Registrierte Auth-Plugins mit Typisierung
+- `_currentPlugin` (AuthPlugin | null): Aktueller Auth-Plugin
+- `_currentIdentity` (Identity | null): Aktuelle typisierte Benutzer-Identität
 - `_initialized` (boolean): Initialisierungsstatus
 
 ## Methoden
 
-### initialize()
+### initialize(): Promise<void>
 
 Initialisiert den IdentityManager und alle registrierten Plugins.
 
@@ -34,28 +34,28 @@ Initialisiert den IdentityManager und alle registrierten Plugins.
 - Promise<void>
 
 **Beispiel:**
-```javascript
+```typescript
 await identityManager.initialize();
 console.log('IdentityManager initialized');
 ```
 
-### registerPlugin(name, plugin)
+### registerPlugin(name: string, plugin: any): void
 
-Registriert ein Authentifizierungs-Plugin.
+Registriert ein typisiertes Authentifizierungs-Plugin.
 
 **Parameter:**
 - `name` (string): Eindeutiger Plugin-Name
-- `plugin` (AuthPlugin): Plugin-Instanz
+- `plugin` (AuthPlugin): Typisierte Plugin-Instanz
 
 **Beispiel:**
-```javascript
-import { Nip07Plugin } from './framework/plugins/auth/Nip07Plugin.js';
+```typescript
+import { Nip07Plugin } from '@johappel/nostr-framework/plugins/auth/Nip07Plugin.js';
 
 const nip07Plugin = new Nip07Plugin();
 identityManager.registerPlugin('nip07', nip07Plugin);
 ```
 
-### unregisterPlugin(name)
+### unregisterPlugin(name: string): void
 
 Entfernt ein registriertes Auth-Plugin.
 
@@ -63,11 +63,11 @@ Entfernt ein registriertes Auth-Plugin.
 - `name` (string): Plugin-Name
 
 **Beispiel:**
-```javascript
+```typescript
 identityManager.unregisterPlugin('nip07');
 ```
 
-### getRegisteredPlugins()
+### getRegisteredPlugins(): string[]
 
 Gibt eine Liste aller registrierten Plugin-Namen zurück.
 
@@ -75,13 +75,13 @@ Gibt eine Liste aller registrierten Plugin-Namen zurück.
 - string[]: Array der registrierten Plugin-Namen
 
 **Beispiel:**
-```javascript
-const plugins = identityManager.getRegisteredPlugins();
+```typescript
+const plugins: string[] = identityManager.getRegisteredPlugins();
 console.log('Registered plugins:', plugins);
-// Output: ['nip07', 'nip46', 'local']
+// Output: ['nip07', 'nip46', 'nsec']
 ```
 
-### getAvailablePlugins()
+### getAvailablePlugins(): Promise<string[]>
 
 Gibt eine Liste der verfügbaren (verwendbaren) Plugins zurück.
 
@@ -89,15 +89,15 @@ Gibt eine Liste der verfügbaren (verwendbaren) Plugins zurück.
 - Promise<string[]>: Array der verfügbaren Plugin-Namen
 
 **Beispiel:**
-```javascript
-const available = await identityManager.getAvailablePlugins();
+```typescript
+const available: string[] = await identityManager.getAvailablePlugins();
 console.log('Available plugins:', available);
 // Output: ['nip07'] (wenn NIP-07 Extension installiert ist)
 ```
 
-### authenticate(providerName, credentials)
+### authenticate(providerName: string, credentials?: AuthCredentials): Promise<Identity>
 
-Authentifiziert einen Benutzer mit einem bestimmten Provider.
+Authentifiziert einen Benutzer mit einem bestimmten Provider und gibt eine typisierte Identity zurück.
 
 **Parameter:**
 - `providerName` (string): Name des registrierten Plugins

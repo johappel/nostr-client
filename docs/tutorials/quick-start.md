@@ -1,8 +1,60 @@
-# Quick Start - Schneller Einstieg in 5 Minuten
+# Quick Start - Schneller Einstieg in 5 Minuten (TypeScript)
 
-Dieses Tutorial zeigt Ihnen, wie Sie in nur 5 Minuten eine funktionierende Nostr-Anwendung mit dem Framework erstellen.
+Dieses Tutorial zeigt Ihnen, wie Sie in nur 5 Minuten eine funktionierende Nostr-Anwendung mit dem Framework v2.0.0 und TypeScript erstellen.
 
-## Schritt 1: Projekt einrichten
+## Schritt 1: Projekt einrichten (TypeScript)
+
+### Option A: NPM/Vite Setup
+
+```bash
+# Erstelle ein neues Vite TypeScript Projekt
+npm create vite@latest nostr-quick-start -- --template vanilla-ts
+cd nostr-quick-start
+
+# Installiere Framework
+npm install @johappel/nostr-framework
+npm install nostr-tools@^2.8.1
+
+# Starte Development Server
+npm run dev
+```
+
+Ersetzen Sie `src/main.ts` mit:
+
+```typescript
+import { NostrFramework, type FrameworkConfig, type Identity } from '@johappel/nostr-framework';
+
+// TypeScript-typisierte Konfiguration
+const config: FrameworkConfig = {
+  relays: ['wss://relay.damus.io', 'wss://nos.lol'],
+  debug: true
+};
+
+// Framework initialisieren
+const nostr = new NostrFramework(config);
+
+async function initApp() {
+  await nostr.initialize();
+  console.log('Framework initialized');
+  
+  // Event Listeners mit Typen
+  const authBtn = document.getElementById('authBtn') as HTMLButtonElement;
+  const publishBtn = document.getElementById('publishBtn') as HTMLButtonElement;
+  
+  authBtn?.addEventListener('click', async () => {
+    try {
+      const identity: Identity = await nostr.identity.authenticate('nip07');
+      console.log('Authenticated:', identity.displayName || identity.npub);
+    } catch (error) {
+      console.error('Auth failed:', error);
+    }
+  });
+}
+
+initApp();
+```
+
+### Option B: HTML mit CDN (einfacher Start)
 
 Erstellen Sie eine neue HTML-Datei namens `index.html`:
 
@@ -51,12 +103,11 @@ Erstellen Sie eine neue HTML-Datei namens `index.html`:
     </div>
     
     <script type="module">
-        import { NostrFramework, LocalStoragePlugin } from './framework/index.js';
+        import { NostrFramework } from 'https://cdn.jsdelivr.net/npm/@johappel/nostr-framework/framework/index.js';
         
-        // Framework initialisieren
+        // Framework mit TypeScript-ähnlicher Nutzung initialisieren
         const nostr = new NostrFramework({
             relays: ['wss://relay.damus.io', 'wss://nos.lol'],
-            storage: new LocalStoragePlugin(),
             debug: true
         });
         
