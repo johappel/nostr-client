@@ -85,7 +85,7 @@ const components: Component[] = [
     name: 'QueryBuilder',
     slug: 'querybuilder',
     description: 'Visual query builder for Nostr filters',
-    status: 'stub',
+    status: 'completed',
     priority: 'high',
     category: 'ui',
     icon: Search,

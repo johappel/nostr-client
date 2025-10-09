@@ -1,75 +1,65 @@
-    'use client'
-    import React, { useState } from 'react'
-    import { Button } from "@/components/ui/button"
-    import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-    import { Separator } from "@/components/ui/separator"
-    import { Textarea } from "@/components/ui/textarea"
-    import { ScrollArea } from "@/components/ui/scroll-area"
-    import { Badge } from "@/components/ui/badge"
-    import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+﻿'use client'
+import React, { useState } from 'react'
+import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Search, Code } from "lucide-react"
 
-    function Stub() {
-      return (
+function Demo() {
+  const [filters, setFilters] = useState([{ kinds: [1], limit: 20 }])
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Search className="w-5 h-5" />
+          QueryBuilder Demo
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Visual query builder for Nostr filters
+          </p>
+          <div className="flex gap-2">
+            <Badge>kinds: [1]</Badge>
+            <Badge variant="outline">limit: 20</Badge>
+          </div>
+          <pre className="text-xs bg-muted p-3 rounded">
+            {JSON.stringify(filters, null, 2)}
+          </pre>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export default function Page() {
+  const exampleCode = `import { QueryBuilder } from "@/components/nostr-ui/QueryBuilder"`
+  
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold mb-4">QueryBuilder</h1>
+        <p className="text-muted-foreground">
+          Visual query builder for constructing Nostr filters
+        </p>
+      </header>
+      
+      <div className="space-y-6">
+        <Demo />
+        
         <Card>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-xl">Querybuilder — MVP Example</CardTitle>
+          <CardHeader>
+            <CardTitle>Usage Example</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              This is a stub preview. Replace with the real import:
-            </p>
-            <ScrollArea className="h-40 rounded-md border p-3">
-              <pre className="text-xs leading-relaxed"><code>{`import { Querybuilder } from "@/components/nostr-ui/Querybuilder"
-
-export default function Demo() {
-  return <Querybuilder />
-}`}</code></pre>
-            </ScrollArea>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">shadcn/ui</Badge>
-              <Badge variant="outline">Tailwind</Badge>
-            </div>
+          <CardContent>
+            <pre className="text-sm bg-muted p-4 rounded">
+              <code>{exampleCode}</code>
+            </pre>
           </CardContent>
         </Card>
-      )
-    }
-
-    function CopyCodeButton({ code }: { code: string }) {
-      const [ok, setOk] = useState(false)
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={async () => { await navigator.clipboard.writeText(code); setOk(true); setTimeout(()=>setOk(false),1200) }}
-                aria-label="Copy code"
-                variant="outline"
-              >
-                {ok ? 'Copied ✓' : 'Copy code'}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Copies the example usage to your clipboard</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )
-    }
-
-    export default function Page() {
-      const code = `import { Querybuilder } from "@/components/nostr-ui/Querybuilder"
-
-export default function Demo() {
-  return <Querybuilder />
-}`
-      return (
-        <div className="mx-auto max-w-3xl p-4 space-y-4">
-          <header className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold">Querybuilder — MVP Example</h1>
-            <CopyCodeButton code={code} />
-          </header>
-          <Separator />
-          <Stub />
-        </div>
-      )
-    }
+      </div>
+    </div>
+  )
+}

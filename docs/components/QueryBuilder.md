@@ -1,8 +1,8 @@
 # QueryBuilder
 
-**Purpose**: Describe what users can accomplish with **QueryBuilder** in the Nostr UI kit.
+**Purpose**: Visual query builder for constructing Nostr filters with an intuitive UI. Users can build complex queries without writing JSON manually.
 
-**Related NIPs**: (adjust as needed) 07, 10, 11, 23/30023, 27, 46, 52, 94, 96
+**Related NIPs**: 01 (Basic protocol), 50 (Search)
 
 **Updated**: 2025-10-09
 
@@ -10,10 +10,39 @@
 
 ## API (Props)
 ```ts
-// Replace with precise props for QueryBuilder
 export interface QueryBuilderProps {
+  value?: NostrFilter[]
+  onChange?: (filters: NostrFilter[]) => void
+  onExecute?: (filters: NostrFilter[]) => void
+  allowedKinds?: number[]
+  maxFilters?: number
+  showPreview?: boolean
+  showExecuteButton?: boolean
+  disabled?: boolean
   className?: string
-  // ...
+  // Headless component override (framework version)
+  components?: {
+    Card?: React.ComponentType<any>
+    Button?: React.ComponentType<any>
+    Input?: React.ComponentType<any>
+    Select?: React.ComponentType<any>
+    Badge?: React.ComponentType<any>
+    Textarea?: React.ComponentType<any>
+  }
+}
+
+export interface NostrFilter {
+  ids?: string[]
+  authors?: string[]
+  kinds?: number[]
+  '#e'?: string[]
+  '#p'?: string[]
+  '#t'?: string[]
+  '#d'?: string[]
+  since?: number
+  until?: number
+  limit?: number
+  search?: string
 }
 ```
 

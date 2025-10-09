@@ -10,12 +10,16 @@ export { NostrConfigPanel } from './components/NostrConfigPanel.js';
 export type { NostrConfigPanelProps, RelayConfig } from './components/NostrConfigPanel.js';
 export { LoginSelector } from './components/LoginSelector.js';
 export type { LoginSelectorProps, LoginProvider } from './components/LoginSelector.js';
+export { QueryBuilder } from './components/QueryBuilder.js';
+export type { QueryBuilderProps, NostrFilter } from './components/QueryBuilder.js';
 
 // Export Hooks
 export { useNostrConfig } from './hooks/useNostrConfig.js';
 export type { NostrConfig } from './hooks/useNostrConfig.js';
 export { useLogin } from './hooks/useLogin.js';
 export type { LoginState } from './hooks/useLogin.js';
+export { useQueryBuilder } from './hooks/useQueryBuilder.js';
+export type { UseQueryBuilderOptions, UseQueryBuilderReturn } from './hooks/useQueryBuilder.js';
 
 /**
  * Hook für Framework-Initialisierung
