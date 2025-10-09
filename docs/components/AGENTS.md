@@ -96,7 +96,7 @@
 * **/examples/app/**
 
   * For **every component**, an MVP page that boots with mock or live data
-  * Includes a "Copy Code" button (client‑side clipboard) and minimal Playwright test
+  * Includes a "Copy Code" button (client‑side clipboard) in a Card component  with code preview and minimal Playwright test
 
 * **/docs/components/**
 
