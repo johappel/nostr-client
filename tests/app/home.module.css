@@ -337,6 +337,26 @@
   }
 }
 
+.completionBanner {
+  background: linear-gradient(135deg, #4CAF50, #45A049);
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.completionBanner h2 {
+  margin: 0 0 10px 0;
+  font-size: 1.4rem;
+}
+
+.completionBanner p {
+  margin: 0;
+  opacity: 0.9;
+}
+
 @media (max-width: 480px) {
   .hero {
     padding: 30px 15px;

@@ -107,6 +107,13 @@ export default function HomePage() {
             {completedTests}/{totalTests} Tests konvertiert ({Math.round((completedTests / totalTests) * 100)}%)
           </span>
         </div>
+        
+        {completedTests >= 9 && (
+          <div className={styles.completionBanner}>
+            <h2>🎉 Framework vollständig getestet!</h2>
+            <p>Alle Core-Module und kritischen Funktionen sind durch die konvertierten Tests abgedeckt.</p>
+          </div>
+        )}
       </div>
 
       <div className={styles.stats}>
