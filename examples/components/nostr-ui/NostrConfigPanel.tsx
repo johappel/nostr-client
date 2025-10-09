@@ -21,7 +21,15 @@ export interface NostrConfigPanelProps {
   value: {
     relays: RelayConfig[]
     auth: { type: 'nip07' | 'bunker' | 'local'; uri?: string }
-    storage: { type: 'indexeddb' | 'server-db' }
+    storage: { 
+      type: 'localStorage' | 'sqlite' | 'sqlite-file'
+      config?: {
+        keyPrefix?: string
+        maxEvents?: number
+        dbName?: string
+        filePath?: string
+      }
+    }
     policy?: { allowPublishKinds: number[]; allowDelete?: boolean }
   }
   onChange: (next: NostrConfigPanelProps['value']) => void
@@ -122,10 +130,10 @@ export function NostrConfigPanel({
   }
 
   // Update storage type
-  const updateStorage = (type: 'indexeddb' | 'server-db') => {
+  const updateStorage = (type: 'localStorage' | 'sqlite' | 'sqlite-file', config?: any) => {
     onChange({
       ...value,
-      storage: { type }
+      storage: { type, config: { ...value.storage.config, ...config } }
     })
   }
 
@@ -314,23 +322,81 @@ export function NostrConfigPanel({
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <Label>Storage Type</Label>
-            <Select value={value.storage.type} onValueChange={(type: 'indexeddb' | 'server-db') => updateStorage(type)}>
+            <Select value={value.storage.type} onValueChange={(type: 'localStorage' | 'sqlite' | 'sqlite-file') => updateStorage(type)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="indexeddb">IndexedDB (Local)</SelectItem>
-                <SelectItem value="server-db">Server Database</SelectItem>
+                <SelectItem value="localStorage">LocalStorage Plugin</SelectItem>
+                <SelectItem value="sqlite">SQLite Plugin (WASM)</SelectItem>
+                <SelectItem value="sqlite-file">SQLite File Plugin (Node.js)</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="text-sm text-muted-foreground relative z-0">
-            {value.storage.type === 'indexeddb' 
-              ? 'Events are stored locally in your browser.'
-              : 'Events are stored on the server (requires authentication).'
+            {value.storage.type === 'localStorage' && 
+              'Events stored in browser localStorage (~5-10MB limit). Fast for small datasets.'
+            }
+            {value.storage.type === 'sqlite' && 
+              'Events stored in SQLite WASM database. Scalable for large datasets with SQL queries.'
+            }
+            {value.storage.type === 'sqlite-file' && 
+              'Events stored in SQLite file. Requires Node.js environment.'
             }
           </div>
+
+          {/* Storage Configuration */}
+          {value.storage.type === 'localStorage' && (
+            <div className="space-y-3 pt-4 border-t">
+              <Label className="text-sm font-medium">LocalStorage Configuration</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">Key Prefix</Label>
+                  <Input
+                    placeholder="nostr_events_"
+                    value={value.storage.config?.keyPrefix || ''}
+                    onChange={(e) => updateStorage(value.storage.type, { keyPrefix: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Max Events</Label>
+                  <Input
+                    type="number"
+                    placeholder="1000"
+                    value={value.storage.config?.maxEvents || ''}
+                    onChange={(e) => updateStorage(value.storage.type, { maxEvents: parseInt(e.target.value) || 1000 })}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {(value.storage.type === 'sqlite' || value.storage.type === 'sqlite-file') && (
+            <div className="space-y-3 pt-4 border-t">
+              <Label className="text-sm font-medium">SQLite Configuration</Label>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">Database Name</Label>
+                  <Input
+                    placeholder="nostr_events.db"
+                    value={value.storage.config?.dbName || ''}
+                    onChange={(e) => updateStorage(value.storage.type, { dbName: e.target.value })}
+                  />
+                </div>
+                {value.storage.type === 'sqlite-file' && (
+                  <div className="space-y-2">
+                    <Label className="text-xs">File Path</Label>
+                    <Input
+                      placeholder="./nostr_events.db"
+                      value={value.storage.config?.filePath || ''}
+                      onChange={(e) => updateStorage(value.storage.type, { filePath: e.target.value })}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

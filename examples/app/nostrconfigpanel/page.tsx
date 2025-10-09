@@ -9,7 +9,7 @@ import { NostrConfigPanel } from "@/components/nostr-ui/NostrConfigPanel"
 import { useNostrConfig } from "@/components/nostr-ui/useNostrConfig"
 
 function Demo() {
-  const { config, setConfig, clearConfig, exportConfig, isLoaded, isHydrated } = useNostrConfig()
+  const { config, setConfig, clearConfig, exportConfig, createStoragePlugin, isLoaded, isHydrated } = useNostrConfig()
 
   // Mock relay health check
   const mockRelayHealth = async (url: string) => {
@@ -58,11 +58,24 @@ function Demo() {
             <Badge variant="secondary">shadcn/ui</Badge>
             <Badge variant="outline">Tailwind</Badge>
             <Badge variant="outline" className="bg-green-50 text-green-700">
-              Auto-saved to {config.storage.type}
+              Auto-saved ({config.storage.type})
+            </Badge>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+              Framework Storage Plugins
             </Badge>
           </div>
           
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const storagePlugin = createStoragePlugin()
+                console.log('Current storage plugin:', storagePlugin)
+              }}
+            >
+              Test Plugin
+            </Button>
             <Button
               variant="outline"
               size="sm"

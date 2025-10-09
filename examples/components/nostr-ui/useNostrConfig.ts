@@ -6,7 +6,15 @@ import type { RelayConfig } from './NostrConfigPanel'
 export interface NostrConfig {
   relays: RelayConfig[]
   auth: { type: 'nip07' | 'bunker' | 'local'; uri?: string }
-  storage: { type: 'indexeddb' | 'server-db' }
+  storage: { 
+    type: 'localStorage' | 'sqlite' | 'sqlite-file'
+    config?: {
+      keyPrefix?: string
+      maxEvents?: number
+      dbName?: string
+      filePath?: string
+    }
+  }
   policy?: { allowPublishKinds: number[]; allowDelete?: boolean }
 }
 
@@ -15,7 +23,13 @@ const DEFAULT_CONFIG: NostrConfig = {
     { url: 'wss://relay.damus.io', read: true, write: true }
   ],
   auth: { type: 'nip07' },
-  storage: { type: 'indexeddb' }
+  storage: { 
+    type: 'localStorage',
+    config: {
+      keyPrefix: 'nostr_events_',
+      maxEvents: 1000
+    }
+  }
 }
 
 const CONFIG_STORAGE_KEY = 'nostr-config'
@@ -55,11 +69,14 @@ export function useNostrConfig(initialConfig?: Partial<NostrConfig>) {
       
       // Persist to storage based on the selected storage type
       try {
-        if (nextConfig.storage.type === 'indexeddb') {
+        if (nextConfig.storage.type === 'localStorage') {
           localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(nextConfig))
-        } else if (nextConfig.storage.type === 'server-db') {
-          // TODO: Implement server-side persistence
-          console.log('Server-side storage not yet implemented, falling back to localStorage')
+        } else if (nextConfig.storage.type === 'sqlite') {
+          // For now, persist config to localStorage even when using SQLite for events
+          localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(nextConfig))
+        } else if (nextConfig.storage.type === 'sqlite-file') {
+          // TODO: Implement file-based config persistence for Node.js
+          console.log('File-based config storage not yet implemented, falling back to localStorage')
           localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(nextConfig))
         }
       } catch (error) {
@@ -97,12 +114,54 @@ export function useNostrConfig(initialConfig?: Partial<NostrConfig>) {
     }
   }, [setConfig])
 
+  // Create actual storage plugin instance
+  const createStoragePlugin = useCallback(() => {
+    if (typeof window === 'undefined') return null
+
+    try {
+      // These would be dynamic imports in a real implementation
+      switch (config.storage.type) {
+        case 'localStorage':
+          console.log('Creating LocalStoragePlugin with config:', config.storage.config)
+          // return new LocalStoragePlugin(config.storage.config)
+          return {
+            type: 'localStorage',
+            config: config.storage.config
+          }
+        
+        case 'sqlite':
+          console.log('Creating SQLitePlugin with config:', config.storage.config)
+          // return new SQLitePlugin(config.storage.config)
+          return {
+            type: 'sqlite',
+            config: config.storage.config
+          }
+        
+        case 'sqlite-file':
+          console.log('Creating SQLiteFilePlugin with config:', config.storage.config)
+          // return new SQLiteFilePlugin(config.storage.config)
+          return {
+            type: 'sqlite-file',
+            config: config.storage.config
+          }
+        
+        default:
+          console.warn('Unknown storage type:', config.storage.type)
+          return null
+      }
+    } catch (error) {
+      console.error('Failed to create storage plugin:', error)
+      return null
+    }
+  }, [config.storage])
+
   return {
     config,
     setConfig,
     clearConfig,
     exportConfig,
     importConfig,
+    createStoragePlugin,
     isLoaded,
     isHydrated
   }
