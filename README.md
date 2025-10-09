@@ -11,7 +11,11 @@ Ein modulares, plugin-basiertes Framework für Nostr-Client-Entwicklung mit Mult
 
 #### NPM (für Projekte)
 ```bash
+# 1. Installiere das Framework
 npm install @johappel/nostr-framework
+
+# 2. Installiere nostr-tools als Peer Dependency
+npm install nostr-tools@^2.8.1
 ```
 
 #### CDN (für schnelle Tests)
@@ -47,8 +51,10 @@ cd nostr-client
 npm install
 ```
 
-Dies installiert:
-- `nostr-tools` (v2.8.1) - Für NIP-19 encoding/decoding und andere Nostr-Utilities
+Für lokale Entwicklung müssen Sie auch `nostr-tools` installieren:
+```bash
+npm install nostr-tools@^2.8.1
+```
 
 ### 4. Development Server starten
 
@@ -68,6 +74,31 @@ npx serve .
 - **NIP-46 Tests**: http://127.0.0.1:5500/test-nip46.html
 - **NSEC Tests**: http://127.0.0.1:5500/test-nsec.html
 - **Relay Tests**: http://127.0.0.1:5500/test-relay.html
+
+## 🔗 Peer Dependencies
+
+Das Framework verwendet `nostr-tools` als **Peer Dependency**. Das bedeutet:
+
+### Vorteile:
+- ✅ **Keine Versions-Konflikte** zwischen Ihren und Framework-Abhängigkeiten
+- ✅ **Reduzierte Bundle-Größe** - nur eine Version von nostr-tools
+- ✅ **Flexibilität** - Sie können die gewünschte Version verwenden
+- ✅ **Baum-Schüttelbar** - ungenutzte Teile werden entfernt
+
+### Installation:
+```bash
+# Framework installieren
+npm install @johappel/nostr-framework
+
+# nostr-tools als Ihr Dependency installieren
+npm install nostr-tools@^2.8.1
+```
+
+### Fehlerbehebung:
+Falls Sie einen Fehler wie "Failed to load nostr-tools" erhalten:
+```bash
+npm install nostr-tools@^2.8.1
+```
 
 ## 📦 Implementierte Module
 
@@ -426,6 +457,9 @@ Das NIP-07 Plugin benötigt eine installierte Browser-Extension:
 - [x] Test-Schlüssel-Generator
 - [x] Vollständige NIP-04/NIP-44 Unterstützung
 
+### ✅ Features (v1.1.2)
+- [x] TypeScript Support
+
 ### 🔮 Zukünftige Features
 - [ ] WordPress API Plugin
 - [ ] NIP-05 Verifikation
@@ -499,5 +533,5 @@ Für schnelle Tests und Prototyping:
 </script>
 ```
 
-**Version**: 1.1.1
+**Version**: 1.1.6
 **Letztes Update**: Metadaten-Abruf, zentrale Konfiguration, NSEC Plugin

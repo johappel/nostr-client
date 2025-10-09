@@ -1,0 +1,337 @@
+/* tests/app/relay/relay.module.css */
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+.header {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.header h1 {
+  color: #333;
+  margin-top: 0;
+  border-bottom: 3px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.description {
+  color: #666;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.controls {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.primaryButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.primaryButton:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.secondaryButton {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.secondaryButton:hover {
+  background: #5a6268;
+}
+
+.testResults {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.testResults h3 {
+  color: #667eea;
+  margin-top: 0;
+}
+
+.resultsGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.testResult {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 4px solid #ddd;
+  background: #f8f9fa;
+}
+
+.testResult.success {
+  background: #d4edda;
+  border-left-color: #28a745;
+}
+
+.testResult.error {
+  background: #f8d7da;
+  border-left-color: #dc3545;
+}
+
+.testResult.pending {
+  background: #fff3cd;
+  border-left-color: #ffc107;
+}
+
+.testResult.skipped {
+  background: #e2e3e5;
+  border-left-color: #6c757d;
+}
+
+.testName {
+  font-weight: 500;
+  flex-grow: 1;
+}
+
+.testStatus {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.testMessage {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+  width: 100%;
+}
+
+.relaySection {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.relaySection h3 {
+  color: #667eea;
+  margin-top: 0;
+}
+
+.relayGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 15px;
+}
+
+.relayCard {
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #ddd;
+  background: #f8f9fa;
+  transition: box-shadow 0.2s;
+}
+
+.relayCard:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.relayCard.connected {
+  background: #d4edda;
+  border-left-color: #28a745;
+}
+
+.relayCard.connecting {
+  background: #fff3cd;
+  border-left-color: #ffc107;
+}
+
+.relayCard.disconnected {
+  background: #e2e3e5;
+  border-left-color: #6c757d;
+}
+
+.relayCard.error {
+  background: #f8d7da;
+  border-left-color: #dc3545;
+}
+
+.relayUrl {
+  font-weight: bold;
+  color: #667eea;
+  word-break: break-all;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.relayStatus {
+  font-size: 12px;
+  color: #666;
+}
+
+.eventsSection {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.eventsSection h3 {
+  color: #667eea;
+  margin-top: 0;
+}
+
+.eventsContainer {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.noEvents {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+}
+
+.eventCard {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  transition: background-color 0.2s;
+}
+
+.eventCard:hover {
+  background: #e9ecef;
+}
+
+.eventCard:last-child {
+  margin-bottom: 0;
+}
+
+.eventId {
+  font-family: monospace;
+  color: #667eea;
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.eventContent {
+  color: #333;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.eventMeta {
+  font-size: 11px;
+  color: #666;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 6px;
+}
+
+.logsSection {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.logsSection h3 {
+  color: #667eea;
+  margin-top: 0;
+}
+
+.logContainer {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 15px;
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.logEntry {
+  margin-bottom: 3px;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.logEntry:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+  
+  .header {
+    padding: 20px;
+  }
+  
+  .controls {
+    flex-direction: column;
+  }
+  
+  .relayGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .resultsGrid {
+    gap: 8px;
+  }
+  
+  .testResult {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+}

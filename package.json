@@ -1,42 +1,16 @@
 {
-  "name": "@johappel/nostr-framework",
-  "version": "1.1.1",
-  "description": "Modular Nostr Client Framework",
+  "name": "@johappel/nostr-framework-docs",
+  "version": "1.1.7",
+  "description": "Documentation and examples for @johappel/nostr-framework",
+  "private": true,
   "type": "module",
-  "main": "framework/index.js",
-  "module": "framework/index.js",
-  "exports": {
-    ".": {
-      "import": "./framework/index.js",
-      "require": "./framework/index.js"
-    },
-    "./config": {
-      "import": "./framework/config.js"
-    },
-    "./plugins/*": {
-      "import": "./framework/plugins/*/index.js"
-    },
-    "./plugins/auth/*": {
-      "import": "./framework/plugins/auth/*.js"
-    },
-    "./templates/*": {
-      "import": "./framework/templates/*.js"
-    }
-  },
-  "files": [
-    "framework/",
-    "docs/",
-    "README.md",
-    "LICENSE",
-    "config.example.html"
-  ],
   "scripts": {
     "dev": "npm run serve",
     "serve": "echo 'Please use VS Code Live Server or similar to serve files'",
     "test": "echo 'Open test-*.html files in browser to run tests'",
-    "prepublishOnly": "npm run test",
-    "build": "echo 'No build step required - ES modules ready'",
-    "publish-npm": "npm publish --access public"
+    "build": "cd framework && npm run build",
+    "build:framework": "cd framework && npm run build",
+    "publish:framework": "cd framework && npm publish --access public"
   },
   "keywords": [
     "nostr",
@@ -60,9 +34,13 @@
     "url": "https://github.com/johappel/nostr-client/issues"
   },
   "dependencies": {
-    "nostr-tools": "^2.8.1"
+    "react": "^19.2.0",
+    "@types/react": "^18.0.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
   "engines": {
     "node": ">=18.0.0"
   }
