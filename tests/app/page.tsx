@@ -45,7 +45,7 @@ export default function HomePage() {
       name: 'Event Manager Test',
       path: '/eventmanager',
       description: 'Test des Event Manager Systems',
-      status: '⏳ Ausstehend',
+      status: '✅ Konvertiert',
       original: 'test-eventmanager.html'
     },
     {
@@ -59,21 +59,21 @@ export default function HomePage() {
       name: 'Relay Manager Test',
       path: '/relay',
       description: 'Test des Relay Manager Systems',
-      status: '⏳ Ausstehend',
+      status: '✅ Konvertiert',
       original: 'test-relay.html'
     },
     {
       name: 'Identity Manager Test',
       path: '/identity',
-      description: 'Test des Identity Manager Systems',
-      status: '⏳ Ausstehend',
+      description: 'Test des Identity Manager Systems mit User-Metadaten',
+      status: '✅ Konvertiert',
       original: 'test-identity.html'
     },
     {
       name: 'SQLite Storage Test',
       path: '/sqlite',
-      description: 'Test des SQLite Storage Plugins',
-      status: '⏳ Ausstehend',
+      description: 'Test des SQLite Storage Plugins mit DB-Operationen',
+      status: '✅ Konvertiert',
       original: 'test-sqlite-storage.html'
     },
     {
