@@ -9,6 +9,8 @@ export { QueryBuilder } from './QueryBuilder.js'
 export type { QueryBuilderProps, NostrFilter as QueryFilter } from './QueryBuilder.js'
 export { EventsList } from './EventsList.js'
 export type { EventsListProps, NostrEvent } from './EventsList.js'
+export { UserProfile } from './UserProfile.js'
+export type { UserProfileProps } from './UserProfile.js'
 
 // Export Hooks
 export { useLogin } from './useLogin.js'
@@ -23,3 +25,9 @@ export type {
   UseEventsListOptions,
   NostrFilter as EventsFilter
 } from './useEventsList.js'
+export { useUserProfile } from './useUserProfile.js'
+export type {
+  UserProfile as UserProfileType,
+  UseUserProfileOptions,
+  UseUserProfileReturn
+} from './useUserProfile.js'

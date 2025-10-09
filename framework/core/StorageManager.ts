@@ -17,7 +17,7 @@ export class StorageManager {
   private _plugin: StoragePlugin | null = null;
   private _syncEnabled = false;
   private _relayManager: any = null;
-  private _syncInterval: number | null = null;
+  private _syncInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(eventBus: EventBus | null = null) {
     this._eventBus = eventBus || new EventBus();

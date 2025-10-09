@@ -14,6 +14,8 @@ export { QueryBuilder } from './components/QueryBuilder.js';
 export type { QueryBuilderProps, NostrFilter as QueryFilter } from './components/QueryBuilder.js';
 export { EventsList } from './components/EventsList.js';
 export type { EventsListProps, NostrEvent } from './components/EventsList.js';
+export { UserProfile } from './components/UserProfile.js';
+export type { UserProfileProps, UserProfile as UserProfileType } from './components/UserProfile.js';
 
 // Export Hooks
 export { useNostrConfig } from './hooks/useNostrConfig.js';
@@ -28,6 +30,12 @@ export type {
   UseEventsListOptions,
   NostrFilter as EventsFilter
 } from './hooks/useEventsList.js';
+export { useUserProfile } from './hooks/useUserProfile.js';
+export type {
+  UserProfile as UserProfileDataType,
+  UseUserProfileOptions,
+  UseUserProfileReturn
+} from './hooks/useUserProfile.js';
 
 /**
  * Hook für Framework-Initialisierung
