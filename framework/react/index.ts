@@ -8,10 +8,14 @@ import type { FrameworkConfig, Identity } from '../types/index.js';
 // Export UI Components
 export { NostrConfigPanel } from './components/NostrConfigPanel.js';
 export type { NostrConfigPanelProps, RelayConfig } from './components/NostrConfigPanel.js';
+export { LoginSelector } from './components/LoginSelector.js';
+export type { LoginSelectorProps, LoginProvider } from './components/LoginSelector.js';
 
 // Export Hooks
 export { useNostrConfig } from './hooks/useNostrConfig.js';
 export type { NostrConfig } from './hooks/useNostrConfig.js';
+export { useLogin } from './hooks/useLogin.js';
+export type { LoginState } from './hooks/useLogin.js';
 
 /**
  * Hook für Framework-Initialisierung

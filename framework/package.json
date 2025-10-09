@@ -24,12 +24,12 @@
       "types": "./dist/types/react/index.d.ts"
     },
     "./react/components": {
-      "import": "./dist/react/components/NostrConfigPanel.js",
-      "types": "./dist/types/react/components/NostrConfigPanel.d.ts"
+      "import": "./dist/react/components/index.js",
+      "types": "./dist/types/react/components/index.d.ts"
     },
     "./react/hooks": {
-      "import": "./dist/react/hooks/useNostrConfig.js",
-      "types": "./dist/types/react/hooks/useNostrConfig.d.ts"
+      "import": "./dist/react/hooks/index.js",
+      "types": "./dist/types/react/hooks/index.d.ts"
     }
   },
   "files": [
