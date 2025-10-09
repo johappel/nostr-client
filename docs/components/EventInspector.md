@@ -28,7 +28,7 @@ export interface EventInspectorProps {
 - Focus management & reduced motion
 
 ## MVP
-- Example page: `/examples/eventinspector/page.tsx`
+- Example page: `/examples/app/eventinspector/page.tsx`
 - Demonstrates core behavior with mock or live data
 - Includes a **Copy code** button and minimal instructions
 

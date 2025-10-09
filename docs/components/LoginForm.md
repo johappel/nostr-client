@@ -28,7 +28,7 @@ export interface LoginFormProps {
 - Focus management & reduced motion
 
 ## MVP
-- Example page: `/examples/loginform/page.tsx`
+- Example page: `/examples/app/loginform/page.tsx`
 - Demonstrates core behavior with mock or live data
 - Includes a **Copy code** button and minimal instructions
 

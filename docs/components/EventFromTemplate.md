@@ -28,7 +28,7 @@ export interface EventFromTemplateProps {
 - Focus management & reduced motion
 
 ## MVP
-- Example page: `/examples/eventfromtemplate/page.tsx`
+- Example page: `/examples/app/eventfromtemplate/page.tsx`
 - Demonstrates core behavior with mock or live data
 - Includes a **Copy code** button and minimal instructions
 

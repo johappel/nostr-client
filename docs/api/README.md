@@ -460,7 +460,7 @@ Das Framework ist unter der MIT-Lizenz veröffentlicht.
 ## Nächste Schritte
 
 1. **Tutorial durchlesen**: [Getting Started Guide](../tutorials/getting-started.md)
-2. **Beispiele ansehen**: [Examples](../examples/)
+2. **Beispiele ansehen**: [Examples](../examples/app/)
 3. **API-Referenz studieren**: [Module APIs](./)
 4. **Erste Anwendung erstellen**: [Quick Start](../tutorials/quick-start.md)
 

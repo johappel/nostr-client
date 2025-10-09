@@ -28,7 +28,7 @@ export interface QueryEventsProps {
 - Focus management & reduced motion
 
 ## MVP
-- Example page: `/examples/queryevents/page.tsx`
+- Example page: `/examples/app/queryevents/page.tsx`
 - Demonstrates core behavior with mock or live data
 - Includes a **Copy code** button and minimal instructions
 

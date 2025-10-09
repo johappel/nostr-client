@@ -36,9 +36,9 @@ Detaillierte Anleitungen für verschiedene Anwendungsfälle:
 
 Praktische Code-Beispiele und vollständige Anwendungen:
 
-- [**Beispiele**](./examples/) - Sammlung von Code-Beispielen
-- [**Demos**](./examples/demos/) - Live-Demos
-- [**Templates**](./examples/templates/) - Projekt-Templates
+- [**Beispiele**](./examples/app/) - Sammlung von Code-Beispielen
+- [**Demos**](./examples/app/demos/) - Live-Demos
+- [**Templates**](./examples/app/templates/) - Projekt-Templates
 
 ### 🔧 Entwicklung
 

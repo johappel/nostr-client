@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test'
 
 test('EventForm.30023 example renders and copies code', async ({ page }) => {
-  // Adjust the route as needed in your app; here we assume /examples/<component>/
-  await page.goto('/examples/eventform-30023/')
+  // Adjust the route as needed in your app; here we assume /examples/app/<component>/
+  await page.goto('/examples/app/eventform-30023/')
   await expect(page.getByRole('heading', { name: 'EventForm.30023 — MVP Example' })).toBeVisible()
   const btn = page.getByRole('button', { name: 'Copy code' })
   await expect(btn).toBeVisible()

@@ -28,7 +28,7 @@ export interface ChannelEventsListProps {
 - Focus management & reduced motion
 
 ## MVP
-- Example page: `/examples/channeleventslist/page.tsx`
+- Example page: `/examples/app/channeleventslist/page.tsx`
 - Demonstrates core behavior with mock or live data
 - Includes a **Copy code** button and minimal instructions
 

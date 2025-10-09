@@ -28,7 +28,7 @@ export interface ContentLinkifierProps {
 - Focus management & reduced motion
 
 ## MVP
-- Example page: `/examples/contentlinkifier/page.tsx`
+- Example page: `/examples/app/contentlinkifier/page.tsx`
 - Demonstrates core behavior with mock or live data
 - Includes a **Copy code** button and minimal instructions
 

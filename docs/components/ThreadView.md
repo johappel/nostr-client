@@ -28,7 +28,7 @@ export interface ThreadViewProps {
 - Focus management & reduced motion
 
 ## MVP
-- Example page: `/examples/threadview/page.tsx`
+- Example page: `/examples/app/threadview/page.tsx`
 - Demonstrates core behavior with mock or live data
 - Includes a **Copy code** button and minimal instructions
 

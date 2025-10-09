@@ -28,7 +28,7 @@ export interface ZapButtonProps {
 - Focus management & reduced motion
 
 ## MVP
-- Example page: `/examples/zapbutton/page.tsx`
+- Example page: `/examples/app/zapbutton/page.tsx`
 - Demonstrates core behavior with mock or live data
 - Includes a **Copy code** button and minimal instructions
 

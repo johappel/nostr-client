@@ -40,7 +40,7 @@ const Schema = z.object({
 
 ## MVP
 
-* Seite: `/examples/event-form-30023/page.tsx`
+* Seite: `/examples/app/event-form-30023/page.tsx`
 * Features: Titel + Content (Markdown) + optionale Tags; Sign → Publish → Ergebnisliste unten
 * Copy‑Code Button zum Snippet
 

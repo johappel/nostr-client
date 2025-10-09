@@ -178,7 +178,7 @@ Nachdem Sie die Grundlagen verstanden haben, können Sie:
 1. [Quick Start Tutorial](./quick-start.md) - Schneller Einstieg in 5 Minuten
 2. [Installation Guide](./installation.md) - Detaillierte Installationsanleitung
 3. [API-Referenz](../api/) - Vollständige API-Dokumentation
-4. [Beispiele](../examples/) - Praktische Code-Beispiele
+4. [Beispiele](../examples/app/) - Praktische Code-Beispiele
 
 ## Häufige Probleme
 

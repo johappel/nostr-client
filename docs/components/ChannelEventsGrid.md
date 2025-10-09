@@ -28,7 +28,7 @@ export interface ChannelEventsGridProps {
 - Focus management & reduced motion
 
 ## MVP
-- Example page: `/examples/channeleventsgrid/page.tsx`
+- Example page: `/examples/app/channeleventsgrid/page.tsx`
 - Demonstrates core behavior with mock or live data
 - Includes a **Copy code** button and minimal instructions
 

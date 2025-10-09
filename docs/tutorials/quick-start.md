@@ -321,7 +321,7 @@ Nachdem Sie diese Demo ausprobiert haben, können Sie:
 1. [Getting Started Tutorial](./getting-started.md) - Detaillierte Einführung in die Konzepte
 2. [Installation Guide](./installation.md) - Verschiedene Installationsmethoden
 3. [API-Referenz](../api/) - Vollständige Dokumentation aller Funktionen
-4. [Beispiele](../examples/) - Weitere praktische Beispiele
+4. [Beispiele](../examples/app/) - Weitere praktische Beispiele
 
 ## Erweiterungsmöglichkeiten
 

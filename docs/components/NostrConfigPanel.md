@@ -35,7 +35,7 @@ export interface NostrConfigPanelProps {
 
 ## MVP
 
-* Seite: `/examples/nostr-config-panel/page.tsx`
+* Seite: `/examples/app/nostr-config-panel/page.tsx`
 * Features:
 
   * Relays hinzufügen/entfernen, read/write togglen

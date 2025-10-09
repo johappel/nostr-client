@@ -31,7 +31,7 @@ export interface LoginSelectorProps {
 
 ## MVP
 
-* Seite: `/examples/login-selector/page.tsx`
+* Seite: `/examples/app/login-selector/page.tsx`
 * Features: erkennt `window.nostr`; zeigt Karten für NIP‑07, Bunker (URI), Local Key; `onChoose` in Konsole
 * Copy‑Code Button inklusive
 

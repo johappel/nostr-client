@@ -28,7 +28,7 @@ export interface NostrChatProps {
 - Focus management & reduced motion
 
 ## MVP
-- Example page: `/examples/nostrchat/page.tsx`
+- Example page: `/examples/app/nostrchat/page.tsx`
 - Demonstrates core behavior with mock or live data
 - Includes a **Copy code** button and minimal instructions
 

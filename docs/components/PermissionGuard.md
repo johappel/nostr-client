@@ -28,7 +28,7 @@ export interface PermissionGuardProps {
 - Focus management & reduced motion
 
 ## MVP
-- Example page: `/examples/permissionguard/page.tsx`
+- Example page: `/examples/app/permissionguard/page.tsx`
 - Demonstrates core behavior with mock or live data
 - Includes a **Copy code** button and minimal instructions
 
