@@ -1,14 +1,16 @@
-# Getting Started mit dem Nostr Framework
+# Getting Started mit dem Nostr Framework v2.0
 
-Dieses Tutorial führt Sie durch die grundlegenden Konzepte und die ersten Schritte mit dem Nostr Framework.
+Dieses Tutorial führt Sie durch die grundlegenden Konzepte und die ersten Schritte mit dem Nostr Framework v2.0 und TypeScript.
 
 ## Voraussetzungen
 
 Bevor Sie beginnen, stellen Sie sicher, dass Sie Folgendes haben:
 
-- Grundkenntnisse in JavaScript (ES6+)
+- Grundkenntnisse in JavaScript/TypeScript (ES6+)
 - Ein moderner Webbrowser (Chrome 88+, Firefox 85+, Safari 14+ oder Edge 88+)
-- Optional: Node.js für serverseitige Entwicklung
+- Node.js 18+ für TypeScript-Projekte
+- TypeScript 4.8+ für volle Typsicherheit
+- Optional: VS Code mit TypeScript Extension für beste Entwicklererfahrung
 
 ## Grundlegende Konzepte
 
@@ -16,17 +18,17 @@ Bevor Sie beginnen, stellen Sie sicher, dass Sie Folgendes haben:
 
 Nostr (Notes and Other Stuff Transmitted by Relays) ist ein dezentralisiertes Protokoll für kryptographisch sichere, zensurresistente soziale Netzwerke.
 
-### Framework-Architektur
+### Framework-Architektur v2.0
 
-Das Nostr Framework ist modular aufgebaut und besteht aus folgenden Hauptkomponenten:
+Das Nostr Framework v2.0 ist modular aufgebaut und besteht aus folgenden TypeScript-Hauptkomponenten:
 
-- **EventBus**: Zentrales Event-System für die Kommunikation zwischen Modulen
-- **IdentityManager**: Verwaltung von Identitäten und Authentifizierung
-- **SignerManager**: Signierung und Verschlüsselung von Events
-- **TemplateEngine**: Vorlagen für die Erstellung von Events
-- **RelayManager**: Verbindung zu Nostr-Relays
-- **EventManager**: Verwaltung von Events
-- **StorageManager**: Lokale Speicherung von Daten
+- **EventBus**: Zentrales typisiertes Event-System für die Kommunikation zwischen Modulen
+- **IdentityManager**: Verwaltung von Identitäten und Authentifizierung mit typed Identity interfaces
+- **SignerManager**: Signierung und Verschlüsselung von Events mit Capability System
+- **TemplateEngine**: Vorlagen für die Erstellung von Events mit Schema-Validierung
+- **RelayManager**: Verbindung zu Nostr-Relays mit Connection Pooling und Status-Tracking
+- **EventManager**: Zentrale Event-Verwaltung mit Template-Integration
+- **StorageManager**: Plugin-basierte lokale Speicherung mit typisierten Adaptern
 
 ## Erstes Projekt einrichten
 

@@ -152,9 +152,12 @@ Erstellen Sie eine neue HTML-Datei namens `index.html`:
                 currentIdentity = await nostr.identity.authenticate('nip07');
                 
                 document.getElementById('authInfo').innerHTML = `
-                    <p><strong>Authentifiziert als:</strong></p>
-                    <p>npub: ${currentIdentity.npub}</p>
-                    <p>Name: ${currentIdentity.name || 'Unbekannt'}</p>
+                    <div class="success">
+                        <strong>Verbunden!</strong><br>
+                        Display Name: ${currentIdentity.displayName || 'Nicht verfügbar'}<br>
+                        NPub: ${currentIdentity.npub}
+                        ${currentIdentity.metadata ? `<br><small>Profile geladen</small>` : ''}
+                    </div>
                 `;
                 
                 updateStatus('Erfolgreich authentifiziert!', 'success');
@@ -180,16 +183,22 @@ Erstellen Sie eine neue HTML-Datei namens `index.html`:
             try {
                 updateStatus('Veröffentliche Text Note...', 'info');
                 
-                const result = await nostr.events.createAndPublish('text-note', {
+                // Event erstellen und veröffentlichen mit v2.0 API
+                const event = await nostr.events.create('text-note', {
                     content: content,
                     tags: [['t', 'quick-start-demo']]
                 });
                 
-                if (result.success) {
+                const result = await nostr.events.publish(event);
+                
+                if (result && result.length > 0) {
                     document.getElementById('publishResult').innerHTML = `
-                        <p><strong>Erfolgreich veröffentlicht!</strong></p>
-                        <p>Event ID: ${result.event.id}</p>
-                        <p>Zeitstempel: ${new Date(result.event.created_at * 1000).toLocaleString()}</p>
+                        <div class="success">
+                            <strong>Erfolgreich veröffentlicht!</strong><br>
+                            Event ID: ${event.id}<br>
+                            Zeitstempel: ${new Date(event.created_at * 1000).toLocaleString()}<br>
+                            Relays: ${result.length} erreicht
+                        </div>
                     `;
                     document.getElementById('noteContent').value = '';
                     updateStatus('Text Note veröffentlicht!', 'success');
@@ -197,7 +206,7 @@ Erstellen Sie eine neue HTML-Datei namens `index.html`:
                     // Events aktualisieren
                     fetchTextNotes();
                 } else {
-                    updateStatus(`Veröffentlichung fehlgeschlagen: ${result.error}`, 'error');
+                    updateStatus('Veröffentlichung fehlgeschlagen: Keine Relays erreicht', 'error');
                 }
             } catch (error) {
                 updateStatus(`Fehler bei der Veröffentlichung: ${error.message}`, 'error');

@@ -1,52 +1,171 @@
-# Nostr Framework - Konfigurationsbeispiel
+# Nostr Framework v2.0 - Konfiguration (TypeScript)
 
 ## Standard-Konfiguration
 
-Das Framework verwendet folgende Standard-Werte:
+Das Framework v2.0 verwendet folgende Standard-Werte:
 
 * **Relays:** relay.damus.io, relay.snort.social, nostr.wine, nos.lol, relay.nostr.band
 * **nostr-tools CDN:** https://esm.sh/nostr-tools@2.8.1
 * **Metadata Cache:** 1 Stunde (3600000 ms)
 * **Relay Timeout:** 5000 ms
 * **Max Cache Size:** 1000 Events
+* **Debug Mode:** false
+* **Standard Templates:** true
 
-  ## Eigene Konfiguration
+## TypeScript-Konfiguration
 
-  Um die Standard-Werte zu überschreiben, definieren Sie ein `window.NostrConfig` Objekt
-  **VOR** dem Laden des Frameworks:
+Mit TypeScript können Sie die Konfiguration vollständig typisiert erstellen:
 
+```typescript
+import { NostrFramework, type FrameworkConfig, type StorageConfig } from '@johappel/nostr-framework';
+
+// Vollständig typisierte Konfiguration
+const config: FrameworkConfig = {
+  // Eigene Relays
+  relays: [
+    'wss://relay.damus.io',
+    'wss://nos.lol',
+    'wss://mein-eigener-relay.com'
+  ],
+  
+  // Anderen nostr-tools CDN verwenden
+  nostrToolsBaseUrl: 'https://cdn.jsdelivr.net/npm/nostr-tools@2.8.1',
+  
+  // Metadata-Cache auf 30 Minuten setzen
+  metadataCacheDuration: 1800000,
+  
+  // Relay-Timeout erhöhen
+  relayTimeout: 10000,
+  
+  // Cache-Größe anpassen
+  maxCacheSize: 2000,
+  
+  // Debug-Modus für Entwicklung
+  debug: process.env.NODE_ENV === 'development',
+  
+  // Standard-Templates laden
+  standardTemplates: true,
+  
+  // Storage-Konfiguration
+  storage: {
+    type: 'localStorage'
+  } as StorageConfig
+};
+
+// Framework mit Konfiguration initialisieren
+const nostr = new NostrFramework(config);
+await nostr.initialize();
 ```
-<!-- Eigene Konfiguration definieren -->
-<script>
-  window.NostrConfig = {
-    // Eigene Relays hinzufügen (werden zu Standard-Relays hinzugefügt)
+
+## Browser-Konfiguration (CDN)
+
+Für Browser-Nutzung mit CDN:
+
+```html
+<script type="module">
+  import { NostrFramework } from 'https://cdn.jsdelivr.net/npm/@johappel/nostr-framework/framework/index.js';
+  
+  // Konfiguration direkt an Konstruktor übergeben
+  const nostr = new NostrFramework({
     relays: [
-      'wss://mein-eigener-relay.com',
-      'wss://noch-ein-relay.de'
+      'wss://relay.damus.io',
+      'wss://nos.lol'
     ],
+    debug: true,
+    metadataCacheDuration: 1800000
+  });
   
-    // Anderen nostr-tools CDN verwenden
-    nostrToolsBaseUrl: 'https://cdn.jsdelivr.net/npm/nostr-tools@2.8.1',
-  
-    // Metadata-Cache auf 30 Minuten setzen
-    metadataCacheDuration: 1800000,
-  
-    // Relay-Timeout erhöhen
-    relayTimeout: 10000,
-  
-    // Cache-Größe anpassen
-    maxCacheSize: 2000
-  };
+  await nostr.initialize();
 </script>
-
-<!-- Dann Framework laden -->
-<script type="module" src="framework/index.js"></script>
-  
 ```
 
-## Teilweise Überschreibung
+## Teilweise Konfiguration
 
-Sie können auch nur einzelne Werte überschreiben:
+Mit TypeScript können Sie auch nur einzelne Werte konfigurieren:
+
+```typescript
+// Minimale Konfiguration
+const simpleConfig: FrameworkConfig = {
+  relays: ['wss://relay.damus.io'],
+  debug: true
+};
+
+// Nur Debug aktivieren
+const debugConfig: FrameworkConfig = {
+  debug: true
+};
+
+// Nur Storage konfigurieren
+const storageConfig: FrameworkConfig = {
+  storage: {
+    type: 'indexedDB'
+  }
+};
+```
+
+## Umgebungsspezifische Konfiguration
+
+```typescript
+// Unterschiedliche Configs für verschiedene Umgebungen
+const isDevelopment = process.env.NODE_ENV === 'development';
+const isProduction = process.env.NODE_ENV === 'production';
+
+const config: FrameworkConfig = {
+  relays: isDevelopment 
+    ? ['wss://relay.damus.io'] // Weniger Relays in Dev
+    : [
+        'wss://relay.damus.io',
+        'wss://nos.lol',
+        'wss://relay.snort.social'
+      ],
+  debug: isDevelopment,
+  metadataCacheDuration: isDevelopment ? 300000 : 3600000, // 5min vs 1h
+  relayTimeout: isDevelopment ? 10000 : 5000
+};
+```
+
+## Konfiguration mit Validierung
+
+```typescript
+import { NostrFramework, type FrameworkConfig } from '@johappel/nostr-framework';
+
+function createValidatedConfig(userConfig: Partial<FrameworkConfig>): FrameworkConfig {
+  // Standardwerte mit Typsicherheit
+  const defaultConfig: FrameworkConfig = {
+    relays: ['wss://relay.damus.io'],
+    debug: false,
+    metadataCacheDuration: 3600000,
+    relayTimeout: 5000,
+    maxCacheSize: 1000,
+    standardTemplates: true
+  };
+
+  // User-Config mit Defaults mergen
+  const config: FrameworkConfig = {
+    ...defaultConfig,
+    ...userConfig
+  };
+
+  // Validierung
+  if (config.relays && config.relays.length === 0) {
+    throw new Error('At least one relay must be configured');
+  }
+
+  if (config.metadataCacheDuration && config.metadataCacheDuration < 0) {
+    throw new Error('Metadata cache duration must be positive');
+  }
+
+  return config;
+}
+
+// Verwendung
+const config = createValidatedConfig({
+  relays: ['wss://relay.damus.io', 'wss://nos.lol'],
+  debug: true
+});
+
+const nostr = new NostrFramework(config);
+```
 
 ```
 <script>
