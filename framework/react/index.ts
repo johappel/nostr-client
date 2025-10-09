@@ -11,7 +11,9 @@ export type { NostrConfigPanelProps, RelayConfig } from './components/NostrConfi
 export { LoginSelector } from './components/LoginSelector.js';
 export type { LoginSelectorProps, LoginProvider } from './components/LoginSelector.js';
 export { QueryBuilder } from './components/QueryBuilder.js';
-export type { QueryBuilderProps, NostrFilter } from './components/QueryBuilder.js';
+export type { QueryBuilderProps, NostrFilter as QueryFilter } from './components/QueryBuilder.js';
+export { EventsList } from './components/EventsList.js';
+export type { EventsListProps, NostrEvent } from './components/EventsList.js';
 
 // Export Hooks
 export { useNostrConfig } from './hooks/useNostrConfig.js';
@@ -20,6 +22,12 @@ export { useLogin } from './hooks/useLogin.js';
 export type { LoginState } from './hooks/useLogin.js';
 export { useQueryBuilder } from './hooks/useQueryBuilder.js';
 export type { UseQueryBuilderOptions, UseQueryBuilderReturn } from './hooks/useQueryBuilder.js';
+export { useEventsList } from './hooks/useEventsList.js';
+export type {
+  EventsListState,
+  UseEventsListOptions,
+  NostrFilter as EventsFilter
+} from './hooks/useEventsList.js';
 
 /**
  * Hook für Framework-Initialisierung
