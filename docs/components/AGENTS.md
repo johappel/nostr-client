@@ -280,6 +280,8 @@ export function CopyCodeButton({ code }: { code: string }) {
 }
 ````
 
+On Completed: set the components prop {status: 'completed'} in [component catalogue](../../examples/app/page.tsx)
+
 ---
 
 ## 7. NIP Templates in `/templates`

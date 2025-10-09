@@ -95,7 +95,7 @@ const components: Component[] = [
     name: 'EventsList',
     slug: 'eventslist',
     description: 'Paginated list of Nostr events with filtering',
-    status: 'stub',
+    status: 'completed',
     priority: 'high',
     category: 'events',
     icon: FileText,
