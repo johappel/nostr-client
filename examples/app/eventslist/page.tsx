@@ -52,7 +52,7 @@ function Demo() {
     setSearchTerm(term)
     
     if (term.trim()) {
-      setFilters([{ 
+      setFilters([{
         kinds: selectedKind === "all" ? [1, 3, 7, 9735] : [parseInt(selectedKind)],
         search: term.trim()
       }])
@@ -61,16 +61,8 @@ function Demo() {
     }
   }
 
-  const addRelay = () => {
-    if (relays.length < 5) {
-      setRelays([...relays, 'wss://new.relay.example.com'])
-    }
-  }
-
-  const removeRelay = (index: number) => {
-    if (relays.length > 1) {
-      setRelays(relays.filter((_, i) => i !== index))
-    }
+  const handleRelaysChange = (newRelays: string[]) => {
+    setRelays(newRelays)
   }
 
   return (
@@ -134,30 +126,6 @@ function Demo() {
               </div>
             </div>
           </div>
-          
-          <div className="space-y-2">
-            <Label>Relays ({relays.length})</Label>
-            <div className="flex flex-wrap gap-2">
-              {relays.map((relay, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {relay.replace('wss://', '')}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0 hover:bg-transparent"
-                    onClick={() => removeRelay(index)}
-                  >
-                    ×
-                  </Button>
-                </Badge>
-              ))}
-              {relays.length < 5 && (
-                <Button variant="outline" size="sm" onClick={addRelay}>
-                  <Plus className="w-3 h-3" />
-                </Button>
-              )}
-            </div>
-          </div>
         </CardContent>
       </Card>
 
@@ -169,6 +137,9 @@ function Demo() {
         autoLoad={true}
         showFilters={false}
         showStats={true}
+        showRelaySelector={true}
+        showUserProfile={true}
+        onRelaysChange={handleRelaysChange}
         onEventClick={(event) => {
           console.log('Event clicked:', event.id)
         }}
@@ -228,6 +199,8 @@ export default function MyApp() {
       filters={filters}
       relays={relays}
       live={true}
+      showRelaySelector={true}
+      showUserProfile={true}
       onEventClick={(event) => {
         console.log('Event clicked:', event.id)
       }}
@@ -265,6 +238,8 @@ export default function MyApp() {
       filters={filters}
       relays={relays}
       live={true}
+      showRelaySelector={true}
+      showUserProfile={true}
       renderEvent={renderEvent}
       components={{
         EventItem: MyCustomEventItem,
@@ -279,14 +254,19 @@ export default function MyApp() {
 
 export default function AdvancedExample() {
   const [filters, setFilters] = useState([])
+  const [relays, setRelays] = useState([
+    'wss://relay.damus.io',
+    'wss://nos.lol',
+    'wss://relay.snort.social'
+  ])
   
   // Search events
   const handleSearch = (query: string) => {
     if (query.trim()) {
-      setFilters([{ 
-        kinds: [1], 
+      setFilters([{
+        kinds: [1],
         search: query.trim(),
-        limit: 20 
+        limit: 20
       }])
     } else {
       setFilters([{ kinds: [1, 3, 7, 9735], limit: 20 }])
@@ -295,11 +275,16 @@ export default function AdvancedExample() {
   
   // Real-time subscription to user's follows
   const handleUserSelect = (pubkey: string) => {
-    setFilters([{ 
-      '#p': [pubkey], 
-      kinds: [1, 6, 7], 
-      limit: 50 
+    setFilters([{
+      '#p': [pubkey],
+      kinds: [1, 6, 7],
+      limit: 50
     }])
+  }
+  
+  // Handle relay changes
+  const handleRelaysChange = (newRelays: string[]) => {
+    setRelays(newRelays)
   }
   
   return (
@@ -307,9 +292,13 @@ export default function AdvancedExample() {
       <SearchInput onSearch={handleSearch} />
       <EventsList
         filters={filters}
+        relays={relays}
         live={true}
         virtualized={true}
         maxHeight={600}
+        showRelaySelector={true}
+        showUserProfile={true}
+        onRelaysChange={handleRelaysChange}
         onEventClick={handleEventClick}
       />
     </div>

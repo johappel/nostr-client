@@ -2,23 +2,28 @@
 
 import React, { useState } from 'react'
 import { useEventsList, type NostrEvent, type NostrFilter } from './useEventsList'
+import { UserProfile } from './UserProfile'
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { 
-  RefreshCw, 
-  MessageSquare, 
-  Users, 
-  Heart, 
-  Zap, 
-  Plus, 
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  RefreshCw,
+  MessageSquare,
+  Users,
+  Heart,
+  Zap,
+  Plus,
   ExternalLink,
   Clock,
   AlertCircle,
-  Loader2
+  Loader2,
+  Server,
+  X
 } from "lucide-react"
 
 export interface EventsListProps {
@@ -32,6 +37,7 @@ export interface EventsListProps {
   onEventClick?: (event: NostrEvent) => void
   onEventDelete?: (event: NostrEvent) => void
   onEventUpdate?: (event: NostrEvent) => void
+  onRelaysChange?: (relays: string[]) => void
   // Custom event rendering
   renderEvent?: (event: NostrEvent, index: number) => React.ReactNode
   // Virtualization options
@@ -40,6 +46,8 @@ export interface EventsListProps {
   // Show additional features
   showFilters?: boolean
   showStats?: boolean
+  showRelaySelector?: boolean
+  showUserProfile?: boolean
 }
 
 /**
@@ -64,13 +72,18 @@ export function EventsList({
   onEventClick,
   onEventDelete,
   onEventUpdate,
+  onRelaysChange,
   renderEvent,
   virtualized = false,
   maxHeight = 500,
   showFilters = true,
-  showStats = true
+  showStats = true,
+  showRelaySelector = true,
+  showUserProfile = true
 }: EventsListProps) {
   const [selectedEvent, setSelectedEvent] = useState<NostrEvent | null>(null)
+  const [currentRelays, setCurrentRelays] = useState<string[]>(relays || ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.snort.social'])
+  const [newRelayUrl, setNewRelayUrl] = useState('')
   
   const {
     events,
@@ -81,11 +94,28 @@ export function EventsList({
     refresh
   } = useEventsList({
     filters,
-    relays,
+    relays: currentRelays,
     live,
     limit,
     autoLoad
   })
+
+  const handleAddRelay = () => {
+    if (newRelayUrl.trim() && !currentRelays.includes(newRelayUrl.trim())) {
+      const updatedRelays = [...currentRelays, newRelayUrl.trim()]
+      setCurrentRelays(updatedRelays)
+      onRelaysChange?.(updatedRelays)
+      setNewRelayUrl('')
+    }
+  }
+
+  const handleRemoveRelay = (relayToRemove: string) => {
+    if (currentRelays.length > 1) {
+      const updatedRelays = currentRelays.filter(relay => relay !== relayToRemove)
+      setCurrentRelays(updatedRelays)
+      onRelaysChange?.(updatedRelays)
+    }
+  }
 
   const handleEventClick = (event: NostrEvent) => {
     setSelectedEvent(event)
@@ -143,8 +173,8 @@ export function EventsList({
     }
 
     return (
-      <Card 
-        key={event.id} 
+      <Card
+        key={event.id}
         className="cursor-pointer hover:shadow-md transition-shadow"
         onClick={() => handleEventClick(event)}
       >
@@ -162,6 +192,22 @@ export function EventsList({
             </div>
           </div>
           
+          {/* User Profile */}
+          {showUserProfile && (
+            <div className="mb-3">
+              <UserProfile
+                pubkey={event.pubkey}
+                relays={currentRelays}
+                compact={true}
+                showEditButton={false}
+                showCopyButton={false}
+                showRefreshButton={false}
+                showStats={false}
+                className="mb-2"
+              />
+            </div>
+          )}
+          
           <div className="mb-3">
             <p className="text-sm line-clamp-3">{event.content}</p>
           </div>
@@ -171,9 +217,9 @@ export function EventsList({
               {event.pubkey.slice(0, 8)}...{event.pubkey.slice(-8)}
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-6 px-2 text-xs"
                 onClick={(e) => {
                   e.stopPropagation()
@@ -182,9 +228,9 @@ export function EventsList({
               >
                 Copy ID
               </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-6 px-2 text-xs"
                 onClick={(e) => {
                   e.stopPropagation()
@@ -254,13 +300,62 @@ export function EventsList({
               {filters.length > 0 && (
                 <span>• {filters.length} filter{filters.length === 1 ? '' : 's'}</span>
               )}
-              {relays && relays.length > 0 && (
-                <span>• {relays.length} relay{relays.length === 1 ? '' : 's'}</span>
+              {currentRelays && currentRelays.length > 0 && (
+                <span>• {currentRelays.length} relay{currentRelays.length === 1 ? '' : 's'}</span>
               )}
             </div>
           </CardContent>
         )}
       </Card>
+
+      {/* Relay Selector */}
+      {showRelaySelector && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Server className="w-5 h-5" />
+              Relay Configuration
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-relay">Add Relay</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="new-relay"
+                  placeholder="wss://relay.example.com"
+                  value={newRelayUrl}
+                  onChange={(e) => setNewRelayUrl(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddRelay()}
+                />
+                <Button onClick={handleAddRelay} disabled={!newRelayUrl.trim()}>
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Active Relays ({currentRelays.length})</Label>
+              <div className="flex flex-wrap gap-2">
+                {currentRelays.map((relay, index) => (
+                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                    {relay.replace('wss://', '')}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 hover:bg-transparent"
+                      onClick={() => handleRemoveRelay(relay)}
+                      disabled={currentRelays.length <= 1}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Error State */}
       {error && (

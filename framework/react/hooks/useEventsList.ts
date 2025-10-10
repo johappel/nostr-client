@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { RelayManager } from '../../core/RelayManager.js'
 
 export interface NostrEvent {
   id: string
@@ -17,6 +18,7 @@ export interface NostrFilter {
   since?: number
   until?: number
   limit?: number
+  search?: string
   [key: string]: any
 }
 
@@ -50,6 +52,7 @@ const INITIAL_STATE: EventsListState = {
  */
 export function useEventsList(options: UseEventsListOptions) {
   const [state, setState] = useState<EventsListState>(INITIAL_STATE)
+  const [relayManager, setRelayManager] = useState<RelayManager | null>(null)
 
   const {
     filters,
@@ -59,51 +62,63 @@ export function useEventsList(options: UseEventsListOptions) {
     autoLoad = true
   } = options
 
+  // Initialize RelayManager
+  useEffect(() => {
+    const initializeRelayManager = async () => {
+      try {
+        const manager = new RelayManager(null, { relays })
+        await manager.initialize()
+        setRelayManager(manager)
+      } catch (error) {
+        console.error('Failed to initialize RelayManager:', error)
+        setState(prev => ({
+          ...prev,
+          error: error instanceof Error ? error.message : 'Failed to initialize relay manager'
+        }))
+      }
+    }
+
+    initializeRelayManager()
+
+    return () => {
+      if (relayManager) {
+        relayManager.destroy()
+      }
+    }
+  }, [])
+
   // Load events from relays
   const loadEvents = useCallback(async (append = false) => {
-    setState(prev => ({ 
-      ...prev, 
-      isLoading: true, 
-      error: null 
+    if (!relayManager) {
+      setState(prev => ({
+        ...prev,
+        error: 'Relay manager not initialized'
+      }))
+      return
+    }
+
+    setState(prev => ({
+      ...prev,
+      isLoading: true,
+      error: null
     }))
 
     try {
-      // In a real implementation, this would use nostr-tools or similar
-      // For now, we'll simulate with mock data
       console.log('Loading events with filters:', filters)
       
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Generate mock events for demonstration
-      // Extract allowed kinds from filters, default to kind 1 if not specified
-      const allowedKinds = filters.length > 0 && filters[0].kinds
-        ? filters[0].kinds
-        : [1] // Default to text notes
-      
-      console.log('Using allowed kinds:', allowedKinds)
-      
-      const mockEvents: NostrEvent[] = Array.from({ length: Math.min(limit, 20) }, (_, i) => {
-        // Select kind from allowed kinds
-        const kind = allowedKinds[Math.floor(Math.random() * allowedKinds.length)]
-        
-        return {
-          id: `mock_event_${Date.now()}_${i}`,
-          pubkey: `mock_pubkey_${Math.random().toString(36).substr(2, 9)}`,
-          created_at: Math.floor(Date.now() / 1000) - (i * 60), // 1 minute apart
-          kind,
-          tags: kind === 7 ? [['e', `reply_to_${i}`]] : [],
-          content: `Mock event content ${i + 1} (kind ${kind}) - ${new Date().toLocaleString()}`,
-          sig: `mock_signature_${Math.random().toString(36).substr(2, 20)}`
-        }
+      // Query events from relays
+      const events = await relayManager.query(filters, {
+        relays,
+        timeout: 5000,
+        limit
       })
 
       setState(prev => {
         const existingEvents = append ? prev.events : []
-        const newEvents = [...existingEvents, ...mockEvents]
+        const newEvents = [...existingEvents, ...events]
         
         // Deduplicate by id
-        const dedupedEvents = newEvents.filter((event, index, self) => 
+        const dedupedEvents = newEvents.filter((event, index, self) =>
           index === self.findIndex(e => e.id === event.id)
         )
         
@@ -114,18 +129,19 @@ export function useEventsList(options: UseEventsListOptions) {
           events: dedupedEvents,
           isLoading: false,
           error: null,
-          hasMore: mockEvents.length === limit
+          hasMore: events.length === limit
         }
       })
 
     } catch (error) {
+      console.error('Failed to load events:', error)
       setState(prev => ({
         ...prev,
         error: error instanceof Error ? error.message : 'Unknown error',
         isLoading: false
       }))
     }
-  }, [filters, relays, limit])
+  }, [filters, relays, limit, relayManager])
 
   // Load more events (pagination)
   const loadMore = useCallback(() => {
@@ -180,37 +196,27 @@ export function useEventsList(options: UseEventsListOptions) {
     }
   }, [autoLoad, filters, loadEvents])
 
-  // Live subscription simulation
+  // Live subscription
   useEffect(() => {
-    if (!live) return
+    if (!live || !relayManager || filters.length === 0) return
 
-    // In a real implementation, this would set up a live subscription
-    // For now, we'll simulate receiving new events periodically
-    const interval = setInterval(() => {
-      if (Math.random() > 0.7) { // 30% chance of new event
-        // Extract allowed kinds from filters for live events
-        const allowedKinds = filters.length > 0 && filters[0].kinds
-          ? filters[0].kinds
-          : [1] // Default to text notes
-        
-        const kind = allowedKinds[Math.floor(Math.random() * allowedKinds.length)]
-        
-        const newEvent: NostrEvent = {
-          id: `live_event_${Date.now()}`,
-          pubkey: `live_pubkey_${Math.random().toString(36).substr(2, 9)}`,
-          created_at: Math.floor(Date.now() / 1000),
-          kind,
-          tags: kind === 7 ? [['e', state.events[0]?.id || '']] : [],
-          content: `Live event (kind ${kind}) - ${new Date().toLocaleString()}`,
-          sig: `live_signature_${Math.random().toString(36).substr(2, 20)}`
-        }
-        
-        addEvent(newEvent)
+    console.log('Setting up live subscription with filters:', filters)
+
+    const subscription = relayManager.subscribe(
+      filters,
+      (event) => {
+        console.log('Received live event:', event.id)
+        addEvent(event)
+      },
+      { relays }
+    )
+
+    return () => {
+      if (subscription) {
+        subscription.close()
       }
-    }, 5000) // Every 5 seconds
-
-    return () => clearInterval(interval)
-  }, [live, addEvent, filters, state.events])
+    }
+  }, [live, filters, relays, relayManager, addEvent])
 
   return {
     ...state,
