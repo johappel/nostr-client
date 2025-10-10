@@ -53,7 +53,7 @@ export interface UseUserProfileReturn {
  */
 export function useUserProfile({
   pubkey,
-  relays = ['wss://relay.damus.io', 'wss://nos.lol'],
+  relays = ['wss://relay.nostr.band', 'wss://nos.lol', 'wss://relay.damus.io'],
   autoLoad = true,
   live = true
 }: UseUserProfileOptions = {}): UseUserProfileReturn {

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useUserProfile, type UserProfile as UserProfileType } from './useUserProfile'
+import { useUserProfile, type UserProfileDataType as UserProfileType } from '@johappel/nostr-framework/react'
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

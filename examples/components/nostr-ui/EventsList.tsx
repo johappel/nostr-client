@@ -23,7 +23,8 @@ import {
   AlertCircle,
   Loader2,
   Server,
-  X
+  X,
+  Edit
 } from "lucide-react"
 
 export interface EventsListProps {
@@ -38,6 +39,9 @@ export interface EventsListProps {
   onEventDelete?: (event: NostrEvent) => void
   onEventUpdate?: (event: NostrEvent) => void
   onRelaysChange?: (relays: string[]) => void
+  onEventEdit?: (event: NostrEvent) => void
+  onEventReact?: (event: NostrEvent, reaction: string) => void
+  onEventComment?: (event: NostrEvent) => void
   // Custom event rendering
   renderEvent?: (event: NostrEvent, index: number) => React.ReactNode
   // Virtualization options
@@ -48,6 +52,7 @@ export interface EventsListProps {
   showStats?: boolean
   showRelaySelector?: boolean
   showUserProfile?: boolean
+  showActions?: boolean
 }
 
 /**
@@ -73,13 +78,17 @@ export function EventsList({
   onEventDelete,
   onEventUpdate,
   onRelaysChange,
+  onEventEdit,
+  onEventReact,
+  onEventComment,
   renderEvent,
   virtualized = false,
   maxHeight = 500,
   showFilters = true,
   showStats = true,
   showRelaySelector = true,
-  showUserProfile = true
+  showUserProfile = true,
+  showActions = true
 }: EventsListProps) {
   const [selectedEvent, setSelectedEvent] = useState<NostrEvent | null>(null)
   const [currentRelays, setCurrentRelays] = useState<string[]>(relays || ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.snort.social'])
@@ -212,35 +221,65 @@ export function EventsList({
             <p className="text-sm line-clamp-3">{event.content}</p>
           </div>
           
-          <div className="flex items-center justify-between">
-            <div className="text-xs text-muted-foreground font-mono">
-              {event.pubkey.slice(0, 8)}...{event.pubkey.slice(-8)}
+          {/* Action Buttons */}
+          {showActions && (
+            <div className="flex items-center justify-between pt-2 border-t">
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEventReact?.(event, '+')
+                  }}
+                >
+                  <Heart className="w-4 h-4 mr-1" />
+                  Like
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEventComment?.(event)
+                  }}
+                >
+                  <MessageSquare className="w-4 h-4 mr-1" />
+                  Comment
+                </Button>
+              </div>
+              <div className="flex items-center gap-1">
+                {event.pubkey && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onEventEdit?.(event)
+                    }}
+                  >
+                    <Edit className="w-4 h-4 mr-1" />
+                    Edit
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigator.clipboard.writeText(`https://njump.me/${event.id}`)
+                  }}
+                >
+                  <ExternalLink className="w-4 h-4 mr-1" />
+                  Share
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-xs"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  navigator.clipboard.writeText(event.id)
-                }}
-              >
-                Copy ID
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-xs"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  console.log('View event details:', event)
-                }}
-              >
-                <ExternalLink className="w-3 h-3" />
-              </Button>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     )

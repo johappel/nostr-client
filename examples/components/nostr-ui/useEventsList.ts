@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 
 export interface NostrEvent {
   id: string
@@ -55,6 +55,7 @@ const INITIAL_STATE: EventsListState = {
  */
 export function useEventsList(options: UseEventsListOptions) {
   const [state, setState] = useState<EventsListState>(INITIAL_STATE)
+  const relayManagerRef = useRef<any>(null)
 
   const {
     filters,
@@ -63,6 +64,73 @@ export function useEventsList(options: UseEventsListOptions) {
     limit = 50,
     autoLoad = true
   } = options
+
+  // Initialize RelayManager
+  const initRelayManager = useCallback(async () => {
+    if (relayManagerRef.current) return relayManagerRef.current
+
+    try {
+      // Dynamic import to avoid SSR issues
+      const { RelayManager } = await import('../../../framework/dist/core/RelayManager')
+      const { SimplePool } = await import('nostr-tools')
+      
+      console.log('Creating RelayManager with relays:', relays)
+      
+      const manager = new RelayManager(null, {
+        relays: relays,
+        SimplePoolClass: SimplePool
+      })
+      
+      // Initialize the RelayManager
+      await manager.initialize()
+      console.log('RelayManager initialized successfully')
+      
+      // Debug: Test direct SimplePool usage
+      console.log('=== DEBUG: Testing direct SimplePool usage ===')
+      try {
+        const directPool = manager._pool
+        const testRelays = ['wss://relay.damus.io', 'wss://nos.lol']
+        const testFilters = [{ 
+          kinds: [1], 
+          limit: 10,
+          since: Math.floor(Date.now() / 1000) - 86400 // Last 24 hours
+        }]
+        
+        console.log('Direct pool:', directPool)
+        console.log('Test relays:', testRelays)  
+        console.log('Test filters:', testFilters)
+        
+        let directEvents: any[] = []
+        const directSub = directPool.subscribeMany(testRelays, testFilters, {
+          onevent: (event: any) => {
+            console.log('=== Direct event received:', event.id)
+            directEvents.push(event)
+          },
+          oneose: () => {
+            console.log('=== Direct EOSE received ===')
+          },
+          onclose: (reason: any) => {
+            console.log('=== Direct close:', reason)
+          }
+        })
+        
+        // Wait a bit and then close
+        setTimeout(() => {
+          directSub.close()
+          console.log('=== Direct test: Got', directEvents.length, 'events ===')
+        }, 3000)
+        
+      } catch (error) {
+        console.error('=== DEBUG: Direct test failed ===', error)
+      }
+      
+      relayManagerRef.current = manager
+      return manager
+    } catch (error) {
+      console.error('Failed to initialize RelayManager:', error)
+      throw error
+    }
+  }, [relays])
 
   // Load events from relays
   const loadEvents = useCallback(async (append = false) => {
@@ -73,40 +141,30 @@ export function useEventsList(options: UseEventsListOptions) {
     }))
 
     try {
-      // In a real implementation, this would use nostr-tools or similar
-      // For demo purposes, we'll simulate with mock data
-      console.log('Loading events with filters:', filters)
+      console.log('Loading real events with filters:', filters)
       
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 800))
+      const relayManager = await initRelayManager()
       
-      // Generate mock events for demonstration
-      // Extract allowed kinds from filters, default to all kinds if not specified
-      const allowedKinds = filters.length > 0 && filters[0].kinds
-        ? filters[0].kinds
-        : [1, 3, 7, 9735] // Default kinds
+      // Prepare filters with limit and reasonable time range to satisfy relay requirements
+      const queryFilters = filters.map(filter => ({
+        ...filter,
+        limit: limit,
+        since: Math.floor(Date.now() / 1000) - (7 * 24 * 60 * 60) // Last 7 days instead of 24 hours
+      }))
       
-      console.log('Using allowed kinds:', allowedKinds)
+      console.log('Querying relays with filters:', queryFilters)
       
-      const mockEvents: NostrEvent[] = Array.from({ length: Math.min(limit, 15) }, (_, i) => {
-        // Select kind from allowed kinds
-        const kind = allowedKinds[Math.floor(Math.random() * allowedKinds.length)]
-        const baseTime = Math.floor(Date.now() / 1000)
-        
-        return {
-          id: `demo_event_${Date.now()}_${i}`,
-          pubkey: `demo_pubkey_${Math.random().toString(36).substr(2, 9)}`,
-          created_at: baseTime - (i * 120), // 2 minutes apart
-          kind,
-          tags: kind === 7 ? [['e', `reply_to_${i}`]] : [],
-          content: getEventContent(kind, i),
-          sig: `demo_signature_${Math.random().toString(36).substr(2, 20)}`
-        }
+      // Query real events from relays
+      const events = await relayManager.query(queryFilters, {
+        timeout: 8000,
+        limit: limit
       })
+      
+      console.log(`Received ${events.length} real events from relays`)
 
       setState(prev => {
         const existingEvents = append ? prev.events : []
-        const newEvents = [...existingEvents, ...mockEvents]
+        const newEvents = [...existingEvents, ...events]
         
         // Deduplicate by id
         const dedupedEvents = newEvents.filter((event, index, self) => 
@@ -120,7 +178,7 @@ export function useEventsList(options: UseEventsListOptions) {
           events: dedupedEvents,
           isLoading: false,
           error: null,
-          hasMore: mockEvents.length === limit
+          hasMore: events.length === limit
         }
       })
 
@@ -133,7 +191,7 @@ export function useEventsList(options: UseEventsListOptions) {
       }))
       console.error('Failed to load events:', errorMessage)
     }
-  }, [filters, relays, limit])
+  }, [filters, relays, limit, initRelayManager])
 
   // Load more events (pagination)
   const loadMore = useCallback(() => {
@@ -198,37 +256,52 @@ export function useEventsList(options: UseEventsListOptions) {
     }
   }, [autoLoad, filters, loadEvents])
 
-  // Live subscription simulation
+  // Live subscription for real events
   useEffect(() => {
-    if (!live) return
+    if (!live || filters.length === 0) return
 
-    // In a real implementation, this would set up a live subscription
-    // For demo purposes, we'll simulate receiving new events periodically
-    const interval = setInterval(() => {
-      if (Math.random() > 0.8) { // 20% chance of new event
-        // Extract allowed kinds from filters for live events
-        const allowedKinds = filters.length > 0 && filters[0].kinds
-          ? filters[0].kinds
-          : [1, 7] // Default kinds for live events
+    let isActive = true
+    let subscription: any = null
+
+    const setupLiveSubscription = async () => {
+      try {
+        console.log('Setting up live subscription with filters:', filters)
         
-        const kind = allowedKinds[Math.floor(Math.random() * allowedKinds.length)]
+        const relayManager = await initRelayManager()
         
-        const newEvent: NostrEvent = {
-          id: `live_event_${Date.now()}`,
-          pubkey: `live_pubkey_${Math.random().toString(36).substr(2, 9)}`,
-          created_at: Math.floor(Date.now() / 1000),
-          kind,
-          tags: kind === 7 ? [['e', state.events[0]?.id || '']] : [],
-          content: getEventContent(kind, 0, true),
-          sig: `live_signature_${Math.random().toString(36).substr(2, 20)}`
-        }
+        subscription = await relayManager.subscribe(filters, (event: NostrEvent) => {
+          if (!isActive) return
+          
+          console.log('Received live event:', event.id)
+          addEvent(event)
+        })
         
-        addEvent(newEvent)
+        console.log('Live subscription established')
+      } catch (error) {
+        console.error('Failed to setup live subscription:', error)
       }
-    }, 8000) // Every 8 seconds
+    }
 
-    return () => clearInterval(interval)
-  }, [live, addEvent, state.events])
+    setupLiveSubscription()
+
+    return () => {
+      isActive = false
+      if (subscription?.close) {
+        subscription.close()
+        console.log('Live subscription closed')
+      }
+    }
+  }, [live, filters, addEvent, initRelayManager])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (relayManagerRef.current?.destroy) {
+        relayManagerRef.current.destroy()
+        console.log('RelayManager destroyed')
+      }
+    }
+  }, [])
 
   return {
     ...state,
@@ -241,29 +314,3 @@ export function useEventsList(options: UseEventsListOptions) {
   }
 }
 
-// Helper function to generate realistic event content
-function getEventContent(kind: number, index: number, isLive = false): string {
-  const timestamp = new Date().toLocaleString()
-  
-  switch (kind) {
-    case 1: // Text note
-      if (isLive) {
-        return `🔴 Live update: Just published something interesting at ${timestamp}`
-      }
-      return `This is demo note #${index + 1} with some interesting content. Published at ${timestamp}`
-    
-    case 3: // Follow list
-      return `Following ${Math.floor(Math.random() * 100) + 10} awesome nostriches`
-    
-    case 7: // Reaction
-      const reactions = ['+', '❤️', '👍', '🔥', '👏', '🎉']
-      return reactions[Math.floor(Math.random() * reactions.length)]
-    
-    case 9735: // Zap
-      const amount = Math.floor(Math.random() * 10000) + 1000
-      return `Zapped ${amount} sats! ⚡`
-    
-    default:
-      return `Event content for kind ${kind}`
-  }
-}

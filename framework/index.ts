@@ -164,6 +164,10 @@ export class NostrFramework {
 export { EventBus } from './core/EventBus.js';
 export { IdentityManager } from './core/IdentityManager.js';
 export { TemplateEngine } from './core/TemplateEngine.js';
+export { RelayManager } from './core/RelayManager.js';
+export { StorageManager } from './core/StorageManager.js';
+export { EventManager } from './core/EventManager.js';
+export { SignerManager } from './core/SignerManager.js';
 export { Config } from './config.js';
 
 // Export plugins

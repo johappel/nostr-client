@@ -27,24 +27,24 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 function Demo() {
-  const [filters, setFilters] = useState<any[]>([{ kinds: [1, 3, 7, 9735] }])
-  const [selectedKind, setSelectedKind] = useState<string>("all")
+  const [filters, setFilters] = useState<any[]>([{ kinds: [1], limit: 50 }])
+  const [selectedKind, setSelectedKind] = useState<string>("1")
   const [searchTerm, setSearchTerm] = useState("")
   const [liveMode, setLiveMode] = useState(true)
   const [relays, setRelays] = useState([
-    'wss://relay.damus.io',
+    'wss://relay.nostr.band',
     'wss://nos.lol',
-    'wss://relay.snort.social'
+    'wss://relay.damus.io'
   ])
 
   const handleKindChange = (kind: string) => {
     setSelectedKind(kind)
     
     if (kind === "all") {
-      setFilters([{ kinds: [1, 3, 7, 9735] }])
+      setFilters([{ kinds: [1, 3, 7, 9735], limit: 50 }])
     } else {
       const kindNum = parseInt(kind)
-      setFilters([{ kinds: [kindNum] }])
+      setFilters([{ kinds: [kindNum], limit: 50 }])
     }
   }
 
@@ -54,7 +54,8 @@ function Demo() {
     if (term.trim()) {
       setFilters([{
         kinds: selectedKind === "all" ? [1, 3, 7, 9735] : [parseInt(selectedKind)],
-        search: term.trim()
+        search: term.trim(),
+        limit: 50
       }])
     } else {
       handleKindChange(selectedKind)
@@ -63,6 +64,21 @@ function Demo() {
 
   const handleRelaysChange = (newRelays: string[]) => {
     setRelays(newRelays)
+  }
+
+  const handleEventEdit = (event: any) => {
+    console.log('Edit event:', event.id)
+    alert(`Edit functionality for event ${event.id} would be implemented here`)
+  }
+
+  const handleEventReact = (event: any, reaction: string) => {
+    console.log('React to event:', event.id, 'with:', reaction)
+    alert(`Reaction "${reaction}" for event ${event.id} would be implemented here`)
+  }
+
+  const handleEventComment = (event: any) => {
+    console.log('Comment on event:', event.id)
+    alert(`Comment functionality for event ${event.id} would be implemented here`)
   }
 
   return (
@@ -133,16 +149,20 @@ function Demo() {
         filters={filters}
         relays={relays}
         live={liveMode}
-        limit={20}
+        limit={50}
         autoLoad={true}
         showFilters={false}
         showStats={true}
         showRelaySelector={true}
         showUserProfile={true}
+        showActions={true}
         onRelaysChange={handleRelaysChange}
         onEventClick={(event) => {
           console.log('Event clicked:', event.id)
         }}
+        onEventEdit={handleEventEdit}
+        onEventReact={handleEventReact}
+        onEventComment={handleEventComment}
       />
     </div>
   )

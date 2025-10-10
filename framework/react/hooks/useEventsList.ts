@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { RelayManager } from '../../core/RelayManager.js'
+import { RelayManager } from '../../index.js'
 
 export interface NostrEvent {
   id: string
@@ -56,7 +56,7 @@ export function useEventsList(options: UseEventsListOptions) {
 
   const {
     filters,
-    relays = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.snort.social'],
+    relays = ['wss://relay.nostr.band', 'wss://nos.lol', 'wss://relay.damus.io'],
     live = true,
     limit = 50,
     autoLoad = true
@@ -66,11 +66,28 @@ export function useEventsList(options: UseEventsListOptions) {
   useEffect(() => {
     const initializeRelayManager = async () => {
       try {
+        console.log('[useEventsList] Initializing RelayManager with relays:', relays)
         const manager = new RelayManager(null, { relays })
         await manager.initialize()
+        console.log('[useEventsList] RelayManager initialized successfully')
         setRelayManager(manager)
+        
+        // Test connection with a simple query
+        setTimeout(async () => {
+          try {
+            console.log('[useEventsList] Testing relay connection...')
+            const testEvents = await manager.query([{ kinds: [1], limit: 5 }], {
+              relays,
+              timeout: 5000
+            })
+            console.log('[useEventsList] Test query returned:', testEvents.length, 'events')
+          } catch (testError) {
+            console.error('[useEventsList] Test query failed:', testError)
+          }
+        }, 1000)
+        
       } catch (error) {
-        console.error('Failed to initialize RelayManager:', error)
+        console.error('[useEventsList] Failed to initialize RelayManager:', error)
         setState(prev => ({
           ...prev,
           error: error instanceof Error ? error.message : 'Failed to initialize relay manager'
@@ -104,14 +121,22 @@ export function useEventsList(options: UseEventsListOptions) {
     }))
 
     try {
-      console.log('Loading events with filters:', filters)
+      console.log('[useEventsList] Loading events with filters:', filters)
+      console.log('[useEventsList] Using relays:', relays)
       
-      // Query events from relays
+      // Query events from relays with longer timeout for better results
       const events = await relayManager.query(filters, {
         relays,
-        timeout: 5000,
+        timeout: 10000, // Increased from 5000ms to 10000ms
         limit
       })
+      
+      console.log('[useEventsList] Query returned:', events.length, 'events')
+      if (events.length === 0) {
+        console.warn('[useEventsList] No events returned - checking relay status...')
+        const status = relayManager.getRelayStatus()
+        console.log('[useEventsList] Relay status:', Object.fromEntries(status))
+      }
 
       setState(prev => {
         const existingEvents = append ? prev.events : []
@@ -134,7 +159,13 @@ export function useEventsList(options: UseEventsListOptions) {
       })
 
     } catch (error) {
-      console.error('Failed to load events:', error)
+      console.error('[useEventsList] Failed to load events:', error)
+      console.error('[useEventsList] Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        filters,
+        relays
+      })
       setState(prev => ({
         ...prev,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -204,7 +235,7 @@ export function useEventsList(options: UseEventsListOptions) {
 
     const subscription = relayManager.subscribe(
       filters,
-      (event) => {
+      (event: NostrEvent) => {
         console.log('Received live event:', event.id)
         addEvent(event)
       },

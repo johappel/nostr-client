@@ -19,7 +19,7 @@ import type {
 export class RelayManager {
   private _eventBus: EventBus;
   private _relays = new Set<string>();
-  private _pool: any = null;
+  public _pool: any = null; // Made public for debugging
   private _poolModule: any = null;
   private _subscriptions = new Map<string, Subscription>();
   private _relayStatus = new Map<string, RelayStatus>();
@@ -27,10 +27,16 @@ export class RelayManager {
   private _fastestRelayTime = 0;
   private _fastestRelayTTL = 5 * 60 * 1000; // 5 minutes cache
 
-  constructor(eventBus: EventBus | null = null, config: { relays?: string[] } = {}) {
+  constructor(eventBus: EventBus | null = null, config: { relays?: string[]; SimplePoolClass?: any } = {}) {
     this._eventBus = eventBus || new EventBus();
     this._relays = new Set(config.relays || []);
+    this._SimplePoolClass = config.SimplePoolClass;
+    
+    console.log('[RelayManager] Constructor - received config:', config);
+    console.log('[RelayManager] Constructor - relays set:', Array.from(this._relays));
   }
+
+  private _SimplePoolClass: any = null;
 
   /**
    * Initialize relay pool
@@ -47,6 +53,11 @@ export class RelayManager {
       // Dynamic import of nostr-tools
       await this._loadNostrTools();
 
+      // Add relays if they were provided in constructor
+      if (this._relays.size === 0) {
+        console.warn('[RelayManager] No relays configured');
+      }
+
       console.log('[RelayManager] Initialized with relays:', Array.from(this._relays));
       this._eventBus.emit('relay:initialized', { relays: Array.from(this._relays) });
     } catch (error) {
@@ -60,54 +71,31 @@ export class RelayManager {
    * @private
    */
   private async _loadNostrTools(): Promise<void> {
-    // Try multiple import strategies
-    const importStrategies = [
-      // 1. Try as peer dependency (from parent application)
-      {
-        name: 'peer dependency',
-        loader: async () => {
-          try {
-            // @ts-ignore - Dynamic import of peer dependency
-            const module = await import('nostr-tools/pool');
-            return module.SimplePool;
-          } catch {
-            throw new Error('Peer dependency import failed');
-          }
-        }
-      },
-
-      // 2. CDN fallback
-      {
-        name: 'CDN fallback',
-        loader: async () => {
-          const cdnUrl = Config.nostrToolsBaseUrl ?? 'https://esm.sh/nostr-tools@2.8.1';
-          const module = await import(`${cdnUrl}/pool`);
-          return module.SimplePool;
-        }
+    try {
+      // Use provided SimplePool class if available, otherwise import
+      let SimplePool;
+      
+      if (this._SimplePoolClass) {
+        SimplePool = this._SimplePoolClass;
+        console.log('[RelayManager] Using provided SimplePool class');
+      } else {
+        // @ts-ignore - Module resolution issue with nostr-tools
+        const module = await import('nostr-tools/pool');
+        SimplePool = module.SimplePool;
+        console.log('[RelayManager] Imported SimplePool from nostr-tools/pool');
       }
-    ];
-
-    let lastError: Error | null = null;
-
-    for (const strategy of importStrategies) {
-      try {
-        console.log(`[RelayManager] Trying ${strategy.name}...`);
-        const SimplePool = await strategy.loader();
-
-        if (!SimplePool) {
-          throw new Error('SimplePool class not found in module');
-        }
-
-        this._pool = new SimplePool();
-        console.log(`[RelayManager] Successfully loaded nostr-tools from ${strategy.name}`);
-        return;
-      } catch (error) {
-        lastError = error as Error;
-        console.warn(`[RelayManager] ${strategy.name} failed:`, (error as Error).message);
+      
+      if (!SimplePool) {
+        throw new Error('SimplePool class not available');
       }
+
+      this._pool = new SimplePool();
+      console.log('[RelayManager] Successfully created SimplePool instance');
+      return;
+    } catch (error) {
+      console.error('[RelayManager] Failed to load nostr-tools:', error);
+      throw new Error(`Failed to load nostr-tools. Install it in your project with: npm install nostr-tools@^2.8.1. Error: ${(error as Error).message}`);
     }
-
-    throw new Error(`Failed to load nostr-tools. Install it in your project with: npm install nostr-tools@^2.8.1. Last error: ${lastError?.message}`);
   }
 
   /**
@@ -117,13 +105,26 @@ export class RelayManager {
   addRelays(relayUrls: string | string[]): void {
     const urls = Array.isArray(relayUrls) ? relayUrls : [relayUrls];
 
-    urls.forEach(url => {
+    const validUrls = urls.filter(url => {
+      try {
+        const parsed = new URL(url);
+        return parsed.protocol === 'ws:' || parsed.protocol === 'wss:';
+      } catch (error) {
+        console.warn('[RelayManager] Invalid relay URL:', url);
+        return false;
+      }
+    });
+
+    validUrls.forEach(url => {
       this._relays.add(url);
       this._relayStatus.set(url, { status: 'disconnected', lastSeen: null });
     });
 
-    console.log('[RelayManager] Added relays:', urls);
-    this._eventBus.emit('relay:added', { relays: urls });
+    console.log('[RelayManager] Added relays:', validUrls);
+    if (validUrls.length !== urls.length) {
+      console.warn('[RelayManager] Skipped invalid URLs:', urls.filter(url => !validUrls.includes(url)));
+    }
+    this._eventBus.emit('relay:added', { relays: validUrls });
   }
 
   /**
@@ -220,34 +221,68 @@ export class RelayManager {
 
     const {
       relays = Array.from(this._relays),
-      timeout = 3500,
+      timeout = 5000, // Increased timeout for real relays
       limit = null
     } = options;
 
-    console.log('[RelayManager] Querying events...', filters);
+    if (relays.length === 0) {
+      throw new Error('No relays available for query');
+    }
+
+    console.log('[RelayManager] Querying events from', relays.length, 'relays');
+    console.log('[RelayManager] Original filters:', JSON.stringify(filters, null, 2));
 
     try {
-      // Try list() method first
-      if (typeof this._pool.list === 'function') {
-        const events = await this._withTimeout(
-          this._pool.list(relays, filters),
-          timeout,
-          'Query timeout'
-        ) as SignedEvent[];
+      // Use original filters directly like in working tests - no cleaning
+      const validFilters = filters.filter(filter => {
+        if (!filter || typeof filter !== 'object') {
+          console.warn('[RelayManager] Invalid filter (not object):', filter);
+          return false;
+        }
+        if (Object.keys(filter).length === 0) {
+          console.warn('[RelayManager] Empty filter detected');
+          return false;
+        }
+        return true;
+      });
 
-        const result = limit ? events.slice(0, limit) : events;
-        console.log(`[RelayManager] Query returned ${result.length} events`);
-
-        this._eventBus.emit('relay:queried', { filters, count: result.length });
-
-        return result;
+      if (validFilters.length === 0) {
+        console.warn('[RelayManager] No valid filters after validation');
+        return [];
       }
 
-      // Fallback to subscribeMany
-      return await this._queryWithSubscription(relays, filters, timeout, limit);
+      console.log('[RelayManager] Using original filters (no cleaning):', JSON.stringify(validFilters, null, 2));
+
+      // Test relay connectivity before querying if we suspect connection issues
+      const hasRecentFailures = Array.from(this._relayStatus.values())
+        .some(status => status.status === 'error' && status.lastSeen && (Date.now() - status.lastSeen) < 30000);
+
+      if (hasRecentFailures) {
+        console.log('[RelayManager] Recent relay failures detected, testing connectivity...');
+        const connectivityResults = await this.testRelayConnectivity();
+        const workingRelays = connectivityResults
+          .filter(result => result.connected)
+          .map(result => result.relay);
+        
+        if (workingRelays.length > 0) {
+          console.log('[RelayManager] Using', workingRelays.length, 'working relays for query');
+          return await this._queryWithSubscription(workingRelays, validFilters, timeout, limit);
+        }
+      }
+
+      // Use subscription-based query (pool.list doesn't exist in this version)
+      return await this._queryWithSubscription(relays, validFilters, timeout, limit);
+
     } catch (error) {
       console.error('[RelayManager] Query failed:', error);
-      this._eventBus.emit('relay:error', { method: 'query', error });
+      console.error('[RelayManager] Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        originalFilters: JSON.stringify(filters),
+        relays,
+        timeout
+      });
+      this._eventBus.emit('relay:error', { method: 'query', error, filters, relays });
       throw error;
     }
   }
@@ -269,6 +304,18 @@ export class RelayManager {
 
     console.log('[RelayManager] Creating subscription:', id);
 
+    console.log('[RelayManager] Creating subscription with filters:', JSON.stringify(filters, null, 2));
+
+    if (!filters || filters.length === 0) {
+      throw new Error('No filters provided for subscription');
+    }
+
+    // Use original filters directly like in working tests - no cleaning
+    console.log('[RelayManager] Using original filters (no cleaning) for subscription:', JSON.stringify(filters, null, 2));
+    
+    // subscribeMany expects an array of filters, not a single filter
+    console.log('[RelayManager] Using original filters array for subscription:', JSON.stringify(filters, null, 2));
+    
     const sub = this._pool.subscribeMany(relays, filters, {
       onevent: (event: SignedEvent) => {
         try {
@@ -369,6 +416,41 @@ export class RelayManager {
   }
 
   /**
+   * Test relay connectivity
+   * @param relayUrl Optional specific relay to test (tests all if not provided)
+   * @returns Promise resolving to connectivity results
+   */
+  async testRelayConnectivity(relayUrl?: string): Promise<{ relay: string, connected: boolean, latency?: number, error?: string }[]> {
+    const relaysToTest = relayUrl ? [relayUrl] : Array.from(this._relays);
+    
+    console.log('[RelayManager] Testing connectivity for', relaysToTest.length, 'relays sequentially');
+    
+    // Test sequentially to avoid overwhelming the browser with parallel WebSocket connections
+    const results: { relay: string, connected: boolean, latency?: number, error?: string }[] = [];
+    
+    for (const url of relaysToTest) {
+      const startTime = Date.now();
+      try {
+        console.log(`[RelayManager] Testing ${url}...`);
+        await this._testRelaySpeed(url);
+        const latency = Date.now() - startTime;
+        this._updateRelayStatus(url, 'connected');
+        results.push({ relay: url, connected: true, latency });
+        console.log(`[RelayManager] ✅ ${url} connected in ${latency}ms`);
+      } catch (error) {
+        this._updateRelayStatus(url, 'error', (error as Error).message);
+        results.push({ relay: url, connected: false, error: (error as Error).message });
+        console.log(`[RelayManager] ❌ ${url} failed: ${(error as Error).message}`);
+      }
+      
+      // Small delay between tests to avoid overwhelming
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    return results;
+  }
+
+  /**
    * Destroy relay manager and cleanup
    */
   destroy(): void {
@@ -377,7 +459,12 @@ export class RelayManager {
     this.closeAllSubscriptions();
 
     if (this._pool && typeof this._pool.close === 'function') {
-      this._pool.close();
+      try {
+        this._pool.close();
+      } catch (error) {
+        console.warn('[RelayManager] Error closing pool:', error);
+        // Continue with cleanup even if pool.close() fails
+      }
     }
 
     this._pool = null;
@@ -397,19 +484,65 @@ export class RelayManager {
    */
   private async _testRelaySpeed(url: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      const ws = new WebSocket(url);
+      let isResolved = false;
+      let ws: WebSocket;
 
-      ws.onopen = () => {
-        ws.close();
-        resolve(url);
-      };
-
-      ws.onerror = () => reject(new Error(`${url} failed`));
-
-      setTimeout(() => {
-        ws.close();
+      const timeout = setTimeout(() => {
+        if (isResolved) return;
+        isResolved = true;
+        try {
+          if (ws && ws.readyState !== WebSocket.CLOSED) {
+            ws.close();
+          }
+        } catch (e) {
+          // Ignore close errors
+        }
         reject(new Error(`${url} timeout`));
-      }, 1000);
+      }, 10000); // Increased timeout to 10 seconds
+
+      try {
+        ws = new WebSocket(url);
+
+        ws.onopen = () => {
+          if (isResolved) return;
+          isResolved = true;
+          clearTimeout(timeout);
+          
+          // Give more time for connection to stabilize
+          setTimeout(() => {
+            try {
+              if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.close();
+              }
+            } catch (e) {
+              // Ignore close errors
+            }
+          }, 500); // Increased delay
+          
+          resolve(url);
+        };
+
+        ws.onerror = () => {
+          if (isResolved) return;
+          isResolved = true;
+          clearTimeout(timeout);
+          reject(new Error(`${url} connection failed`));
+        };
+
+        ws.onclose = (event) => {
+          if (isResolved) return;
+          // Only reject if it's an unexpected close and we haven't resolved yet
+          if (!event.wasClean && event.code !== 1000) {
+            isResolved = true;
+            clearTimeout(timeout);
+            reject(new Error(`${url} connection closed with code ${event.code}`));
+          }
+        };
+      } catch (error) {
+        isResolved = true;
+        clearTimeout(timeout);
+        reject(new Error(`${url} WebSocket creation failed: ${error}`));
+      }
     });
   }
 
@@ -422,41 +555,137 @@ export class RelayManager {
       const events: SignedEvent[] = [];
       const seen = new Set<string>();
       let eoseCount = 0;
-      const targetEose = relays.length;
+      const connectedRelays = new Set<string>();
+      let isResolved = false;
+      let sub: any = null;
 
-      const timer = setTimeout(() => {
+      const cleanup = () => {
         if (sub && typeof sub.close === 'function') {
-          sub.close();
+          try {
+            sub.close();
+          } catch (error) {
+            console.warn('[RelayManager] Error closing subscription:', error);
+          }
         }
-        resolve(events);
+      };
+
+      const resolveOnce = (result: SignedEvent[]) => {
+        if (isResolved) return;
+        isResolved = true;
+        cleanup();
+        console.log(`[RelayManager] Query completed: ${result.length} events from ${connectedRelays.size}/${relays.length} relays`);
+        this._eventBus.emit('relay:queried', { filters, count: result.length, relays: Array.from(connectedRelays) });
+        resolve(result);
+      };
+
+      const rejectOnce = (error: Error) => {
+        if (isResolved) return;
+        isResolved = true;
+        cleanup();
+        reject(error);
+      };
+
+      // Set up timeout
+      const timer = setTimeout(() => {
+        if (!isResolved) {
+          console.log(`[RelayManager] Query timeout after ${timeout}ms, returning ${events.length} events`);
+          resolveOnce([...events]);
+        }
       }, timeout);
 
-      const sub = this._pool.subscribeMany(relays, filters, {
-        onevent: (event: SignedEvent) => {
-          if (!seen.has(event.id)) {
-            seen.add(event.id);
-            events.push(event);
+      console.log('[RelayManager] Starting subscription query on', relays.length, 'relays');
+      console.log('[RelayManager] Query filters:', JSON.stringify(filters, null, 2));
 
-            if (limit && events.length >= limit) {
-              clearTimeout(timer);
-              if (sub && typeof sub.close === 'function') {
-                sub.close();
+      if (!filters || filters.length === 0) {
+        rejectOnce(new Error('No filters provided'));
+        return;
+      }
+
+      console.log('[RelayManager] Using original filters directly (no cleaning):', JSON.stringify(filters, null, 2));
+
+      try {
+        // subscribeMany expects an array of filters
+        console.log('[RelayManager] Using original filters array:', JSON.stringify(filters));
+        
+        sub = this._pool.subscribeMany(relays, filters, {
+          onevent: (event: SignedEvent) => {
+            if (isResolved) return;
+
+            try {
+              // Validate event has required fields
+              if (!event || !event.id || !event.pubkey) {
+                console.warn('[RelayManager] Invalid event received:', event);
+                return;
               }
-              resolve(events);
+
+              if (!seen.has(event.id)) {
+                seen.add(event.id);
+                events.push(event);
+                
+                console.log(`[RelayManager] Added event ${event.id} (${events.length} total)`);
+
+                // Update relay status for successful event
+                for (const relay of relays) {
+                  this._updateRelayStatus(relay, 'connected');
+                }
+
+                // Check if we've reached the limit
+                if (limit && events.length >= limit) {
+                  console.log(`[RelayManager] Reached limit of ${limit} events`);
+                  clearTimeout(timer);
+                  resolveOnce([...events]);
+                }
+              }
+            } catch (error) {
+              console.error('[RelayManager] Error processing event:', error);
             }
-          }
-        },
-        oneose: () => {
-          eoseCount++;
-          if (eoseCount >= targetEose) {
-            clearTimeout(timer);
-            if (sub && typeof sub.close === 'function') {
-              sub.close();
+          },
+          
+          oneose: () => {
+            if (isResolved) return;
+            
+            eoseCount++;
+            console.log(`[RelayManager] EOSE ${eoseCount}/${relays.length}`);
+            
+            // Consider a relay connected if we got EOSE
+            if (eoseCount <= relays.length) {
+              connectedRelays.add(`relay-${eoseCount}`); // We don't know which specific relay, but track count
             }
-            resolve(events);
+
+            // If all relays have sent EOSE or we have enough results, complete
+            if (eoseCount >= relays.length) {
+              console.log('[RelayManager] All relays sent EOSE');
+              clearTimeout(timer);
+              resolveOnce([...events]);
+            }
+          },
+          
+          onclose: (reason: any) => {
+            console.log('[RelayManager] Subscription closed:', reason);
+            // Don't auto-resolve on close, let timeout handle it
           }
+        });
+
+        // Handle case where subscribeMany fails immediately
+        if (!sub) {
+          throw new Error('Failed to create subscription');
         }
-      });
+
+        // For very short timeouts or when no relays respond, resolve early if we have some events
+        if (timeout < 2000) {
+          setTimeout(() => {
+            if (!isResolved && events.length > 0) {
+              console.log('[RelayManager] Short timeout, resolving with partial results');
+              resolveOnce([...events]);
+            }
+          }, Math.min(1000, timeout / 2));
+        }
+
+      } catch (error) {
+        console.error('[RelayManager] Subscription creation failed:', error);
+        clearTimeout(timer);
+        rejectOnce(error instanceof Error ? error : new Error('Subscription failed'));
+      }
     });
   }
 
@@ -478,6 +707,57 @@ export class RelayManager {
    */
   private _generateSubscriptionId(): string {
     return 'sub_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  /**
+   * Validate and clean nostr filters
+   * @private
+   */
+  private _validateFilters(filters: any[]): any[] {
+    return filters.map(filter => {
+      if (!filter || typeof filter !== 'object') {
+        console.warn('[RelayManager] Invalid filter (not object):', filter);
+        return null;
+      }
+
+      // Create a simple copy without excessive validation that might break things
+      const cleanFilter: Record<string, any> = {};
+      
+      // Copy basic properties with minimal validation
+      if (filter.kinds !== undefined && Array.isArray(filter.kinds)) {
+        cleanFilter.kinds = filter.kinds;
+      }
+      
+      if (filter.authors !== undefined && Array.isArray(filter.authors)) {
+        cleanFilter.authors = filter.authors;
+      }
+      
+      if (filter.ids !== undefined && Array.isArray(filter.ids)) {
+        cleanFilter.ids = filter.ids;
+      }
+      
+      if (filter.since !== undefined && typeof filter.since === 'number') {
+        cleanFilter.since = filter.since;
+      }
+      
+      if (filter.until !== undefined && typeof filter.until === 'number') {
+        cleanFilter.until = filter.until;
+      }
+      
+      if (filter.limit !== undefined && typeof filter.limit === 'number') {
+        cleanFilter.limit = filter.limit;
+      }
+      
+      // Copy tag filters
+      Object.keys(filter).forEach(key => {
+        if (key.startsWith('#')) {
+          cleanFilter[key] = filter[key];
+        }
+      });
+      
+      // Return the filter if it has any properties
+      return Object.keys(cleanFilter).length > 0 ? cleanFilter : null;
+    }).filter(filter => filter !== null);
   }
 
   /**
